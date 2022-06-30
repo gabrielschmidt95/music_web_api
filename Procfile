@@ -1,1 +1,1 @@
-web: waitress-serve app:app.server
+web: waitress-serve --listen=*:5000 app:app.server

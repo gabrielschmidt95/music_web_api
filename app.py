@@ -74,4 +74,4 @@ def update_output(value):
 
 if __name__ == '__main__':
     # app.run_server(debug=True)
-    serve(app.server, host="0.0.0.0", port=8080)
+    serve(app.server)

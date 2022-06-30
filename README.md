@@ -10,4 +10,4 @@ A small dashboard to help my dad with his music collection
 - Python
 - Dash
 - Plotly
-- Mongodb 
+- Mongodb

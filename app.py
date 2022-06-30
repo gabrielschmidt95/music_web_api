@@ -9,6 +9,9 @@ import os
 
 load_dotenv()
 
+port = int(os.environ.get("PORT", 5000))
+
+
 CONNECTION_STRING = os.environ['CONNECTION_STRING']
 DATABASE = "MEDIA"
 
@@ -74,4 +77,4 @@ def update_output(value):
 
 if __name__ == '__main__':
     # app.run_server(debug=True)
-    serve(app.server)
+    serve(app.server, host="0.0.0.0", port=port, debug=True)

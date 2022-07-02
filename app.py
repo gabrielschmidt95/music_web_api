@@ -1,7 +1,8 @@
+from dash import Dash, html, dcc, dependencies
+from assets.styles import *
+import dash_bootstrap_components as dbc
 from pymongo import MongoClient
 from dotenv import load_dotenv
-from dash import Dash, html, dcc, dependencies, dash_table
-from dash.exceptions import PreventUpdate
 from waitress import serve
 import pandas as pd
 import os
@@ -28,7 +29,7 @@ class MongoConn:
         return self.conn[col]
 
 
-app = Dash(__name__)
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 db = MongoConn(CONNECTION_STRING, DATABASE)
 db.open_conn()
@@ -36,21 +37,43 @@ data = db.collection("CD").find()
 df = pd.DataFrame(list(data))
 df.drop('_id', inplace=True, axis=1)
 
+sidebar = html.Div(
+    [
+        html.H2("Music", className="display-4"),
+        html.Hr(),
+        html.P(
+            "Collection Mananger", className="lead"
+        ),
+        html.Label("Ano de Lançamento"),
+        dcc.Dropdown(
+            id="input",
+            options=[{'label': str(i), 'value': str(i)}
+                     for i in sorted(df['RELEASE_YEAR'].unique())],
+            value=''
+        ),
+        # dbc.Nav(
+        #     [
+        #         dbc.NavLink("Home", href="/", active="exact"),
+        #         dbc.NavLink("Page 1", href="/page-1", active="exact"),
+        #         dbc.NavLink("Page 2", href="/page-2", active="exact"),
+        #     ],
+        #     vertical=True,
+        #     pills=True,
+        # ),
+    ],
+    style=SIDEBAR_STYLE,
+)
+
+content = html.Div([
+
+    html.Div(id='disco')
+
+], style=CONTENT_STYLE)
+
+
 app.layout = html.Div(children=[
-    html.H1(children='MUSIC COLLECTION MANANGER'),
-    html.Label("Ano de Lançamento"),
-    dcc.Dropdown(
-        id="input",
-        options=[{'label': str(i), 'value': str(i)}
-                 for i in sorted(df['RELEASE_YEAR'].unique())],
-        value=''
-    ),
-
-    html.Div(id='disco', children=[dash_table.DataTable(
-        columns=[{'name': i, 'id': i} for i in df.columns],
-        data=df.to_dict('records')
-    )])
-
+    sidebar,
+    dcc.Loading(content)
 ])
 
 
@@ -60,21 +83,41 @@ app.layout = html.Div(children=[
     prevent_initial_callback=True)
 def update_output(value):
     if value is None or len(value) < 1:
-        table = dash_table.DataTable(
-            columns=[{'name': i, 'id': i} for i in df.columns],
-            data=df.to_dict('records')
-        )
-        return table
+        dff = df
     else:
-        print(f"value{type(value)}")
         dff = df.query(f'RELEASE_YEAR == {value}')
-        table = dash_table.DataTable(
-            columns=[{'name': i, 'id': i} for i in dff.columns],
-            data=dff.to_dict('records')
-        )
-        return table
+    return dbc.Accordion([dbc.AccordionItem([
+        html.H4(data["TITLE"], className="card-title"),
+        html.H5(data["ARTIST"], className="card-title"),
+        dbc.Row(
+            [
+                dbc.Col(dbc.Row([html.Div(f'RELEASE YEAR: {data["RELEASE_YEAR"]}')])),
+                dbc.Col(html.Div(f'MEDIA: {data["MEDIA"]}')),
+                dbc.Col(html.Div(f'PURCHASE: {data["PURCHASE"]}')),
+            ],
+            align="start",
+        ),
+        dbc.Row(
+            [
+                dbc.Col(html.Div(f'ORIGIN: {data["ORIGIN"]}')),
+                dbc.Col(html.Div(f'IFPI_MASTERING: {data["IFPI_MASTERING"]}')),
+                dbc.Col(html.Div(f'IFPI_MOULD: {data["IFPI_MOULD"]}')),
+            ],
+            align="start",
+        ),
+        dbc.Row(
+            [
+                dbc.Col(html.Div(f'BARCODE: {data["BARCODE"]}')),
+                dbc.Col(html.Div(f'MATRIZ: {data["MATRIZ"]}')),
+                dbc.Col(html.Div(f'LOTE: {data["LOTE"]}')),
+            ],
+            align="start",
+        ),
+
+    ], title=f'{data["TITLE"]}',
+    ) for data in dff.to_dict('records')])
 
 
 if __name__ == '__main__':
-    #app.run_server(debug=True)
-    serve(app.server, listen='*:{port}')
+    app.run_server(debug=True, port=5000)
+    #serve(app.server, port=5000)

@@ -14,6 +14,9 @@ jobs:
       CONNECTION_STRING: ${{secrets.CONNECTION_STRING}}   
       DATABASE: ${{secrets.DATABASE}}
     steps:
+    - name: step 1
+        ## Reference your environment variables
+      run: echo "The API key is:${{secrets.DATABASE}}"   
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3

@@ -10,7 +10,9 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.10"]
-
+    env:
+      CONNECTION_STRING: ${{secrets.CONNECTION_STRING}}   
+      DATABASE: ${{secrets.DATABASE}}
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}

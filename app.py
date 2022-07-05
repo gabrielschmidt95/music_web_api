@@ -22,7 +22,7 @@ app = Dash(__name__, external_stylesheets=[
            dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP])
 
 
-sidebar = html.Div(
+sidebar = dbc.Col(
     [
         html.H2("Music", className="display-4"),
         html.Hr(),
@@ -32,19 +32,21 @@ sidebar = html.Div(
             [
                 dbc.Row(
                     [
-                        dbc.Label(" Lançamento", width=5, className="bi bi-calendar-event"),
+                        dbc.Label(" Artista", width=3,
+                                  className="bi bi-person"),
                         dbc.Col(
                             dcc.Dropdown(
                                 id={
                                     'type': 'filter-dropdown',
-                                    'index': 'RELEASE_YEAR'
+                                    'index': 'ARTIST'
                                 },
                                 options=[{'label': str(i), 'value': str(i)}
-                                         for i in sorted(df['RELEASE_YEAR'].unique())],
+                                         for i in sorted(df['ARTIST'].unique())],
                                 value=None,
                                 clearable=False,
+                                optionHeight=40,
                                 className="me-3"
-                            ), width=6
+                            ), width=9
                         ),
                     ],
                     className="g-2",
@@ -52,7 +54,7 @@ sidebar = html.Div(
                 html.Hr(),
                 dbc.Row(
                     [
-                        dbc.Label(" Media", width=5,className="bi bi-vinyl"),
+                        dbc.Label(" Media", width=3, className="bi bi-vinyl"),
                         dbc.Col(
                             dcc.Dropdown(
                                 id={
@@ -64,7 +66,7 @@ sidebar = html.Div(
                                 value=None,
                                 clearable=False,
                                 className="me-3"
-                            ), width=6
+                            ), width=9
                         ),
                     ],
                     className="g-2",
@@ -72,7 +74,7 @@ sidebar = html.Div(
                 html.Hr(),
                 dbc.Row(
                     [
-                        dbc.Label(" Origem", width=5, className="bi bi-house"),
+                        dbc.Label(" Origem", width=3, className="bi bi-house"),
                         dbc.Col(
                             dcc.Dropdown(
                                 id={
@@ -84,7 +86,7 @@ sidebar = html.Div(
                                 value=None,
                                 clearable=False,
                                 className="me-3"
-                            ), width=6
+                            ), width=9
                         ),
                     ],
                     className="g-2",
@@ -92,19 +94,27 @@ sidebar = html.Div(
                 html.Hr(),
                 dbc.Row(
                     [
-                        dbc.Label(" Total de CD\'s", width=5, className="bi bi-music-note"),
-                        dbc.Col(
-                            dbc.Alert(df.groupby(['MEDIA'])['MEDIA'].count(), color="success", className="me-3"), width=6
+                        dbc.Col(dbc.Card(
+                            [
+                                dbc.CardHeader("Total de CD\'s"),
+                                dbc.CardBody(
+                                    [
+                                        html.H5(df.groupby(['MEDIA'])['MEDIA'].count(),
+                                                className="card-title"),
+                                    ]
+                                ),
+                            ], color="success", outline=True)
                         ),
-                    ],
-                    className="g-2",
-                ),
-                html.Hr(),
-                dbc.Row(
-                    [
-                        dbc.Label(" Total Geral", width=5, className="bi bi-music-note-beamed"),
-                        dbc.Col(
-                            dbc.Alert(len(df.index), color="success", className="me-3"), width=6
+                        dbc.Col(dbc.Card(
+                            [
+                                dbc.CardHeader("Total Geral"),
+                                dbc.CardBody(
+                                    [
+                                        html.H5(len(df.index),
+                                                className="card-title"),
+                                    ]
+                                ),
+                            ], color="success", outline=True)
                         ),
                     ],
                     className="g-2",
@@ -171,7 +181,7 @@ content = html.Div([
                             max_value=1,
                             fully_expanded=False), width=3
                     )], justify="center"
-                )],label="Lista de Discos"
+                )], label="Lista"
             ),
             dbc.Tab(total_year, label="Totais por Ano"),
             dbc.Tab(total_origin, label="Totais por Origem"),
@@ -256,26 +266,34 @@ def update_output(value, pagination, _filter):
         html.H5(f' {data["ARTIST"]}', className="card-title bi bi-person"),
         dbc.Row(
             [
-                dbc.Col(html.Div(f' RELEASE YEAR: {data["RELEASE_YEAR"]}',className="bi bi-calendar-event")),
-                dbc.Col(html.Div(f' MEDIA: {data["MEDIA"]}',className="bi bi-vinyl")),
-                dbc.Col(html.Div(f' PURCHASE: {data["PURCHASE"]}',className="bi bi-cart3")),
-            ],
-            align="start",
-        ),
-        dbc.Row(
-            [
-                dbc.Col(html.Div(f' ORIGIN: {data["ORIGIN"]}',className="bi bi-house")),
+                dbc.Col(html.Div(
+                    f' RELEASE YEAR: {data["RELEASE_YEAR"]}', className="bi bi-calendar-event")),
                 dbc.Col(
-                    html.Div(f' IFPI_MASTERING: {data["IFPI_MASTERING"]}',className="bi bi-body-text")),
-                dbc.Col(html.Div(f' IFPI_MOULD: {data["IFPI_MOULD"]}',className="bi bi-body-text")),
+                    html.Div(f' MEDIA: {data["MEDIA"]}', className="bi bi-vinyl")),
+                dbc.Col(
+                    html.Div(f' PURCHASE: {data["PURCHASE"]}', className="bi bi-cart3")),
             ],
             align="start",
         ),
         dbc.Row(
             [
-                dbc.Col(html.Div(f' BARCODE: {data["BARCODE"]}',className="bi bi-body-text")),
-                dbc.Col(html.Div(f' MATRIZ: {data["MATRIZ"]}',className="bi bi-body-text")),
-                dbc.Col(html.Div(f' LOTE: {data["LOTE"]}',className="bi bi-body-text"))
+                dbc.Col(
+                    html.Div(f' ORIGIN: {data["ORIGIN"]}', className="bi bi-house")),
+                dbc.Col(
+                    html.Div(f' IFPI_MASTERING: {data["IFPI_MASTERING"]}', className="bi bi-body-text")),
+                dbc.Col(
+                    html.Div(f' IFPI_MOULD: {data["IFPI_MOULD"]}', className="bi bi-body-text")),
+            ],
+            align="start",
+        ),
+        dbc.Row(
+            [
+                dbc.Col(
+                    html.Div(f' BARCODE: {data["BARCODE"]}', className="bi bi-body-text")),
+                dbc.Col(
+                    html.Div(f' MATRIZ: {data["MATRIZ"]}', className="bi bi-body-text")),
+                dbc.Col(
+                    html.Div(f' LOTE: {data["LOTE"]}', className="bi bi-body-text"))
             ],
             align="start",
         ),

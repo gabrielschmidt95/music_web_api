@@ -366,19 +366,22 @@ def change_page(page):
     prevent_initial_call=True,
 )
 def on_button_click(n, _filter):
+    print(_filter.items())
     if n is None:
         raise ""
     else:
-        _query = ''
-        for key, value in _filter.items():
-            if value.isdigit():
-                _query += f"{key} == {value} & "
-            else:
-                _query += f"{key} == '{value}' & "
+        if len(_filter.items()) > 0:
+            _query = ''
+            for key, value in _filter.items():
+                if value.isdigit():
+                    _query += f"{key} == {value} & "
+                else:
+                    _query += f"{key} == '{value}' & "
 
-        _query = _query[:_query.rfind("&")]
-        dff = df.query(_query)
-        return dcc.send_data_frame(dff.to_excel, "collection.xlsx")
+            _query = _query[:_query.rfind("&")]
+            return dcc.send_data_frame(df.query(_query).to_excel, "collection.xlsx")
+        else:   
+            return dcc.send_data_frame(df.to_excel, "collection.xlsx")
 
 
 if __name__ == '__main__':

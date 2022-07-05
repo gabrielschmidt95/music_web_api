@@ -13,4 +13,5 @@ class MongoDBConn(MongoClient):
     def qyery(self, coll, query=""):
         df = pd.DataFrame(list(self.conn[coll].find(query)))
         df.drop('_id', inplace=True, axis=1)
+        df["PURCHASE"] = df["PURCHASE"].astype('datetime64[ns]')
         return  df

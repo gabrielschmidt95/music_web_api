@@ -96,10 +96,21 @@ sidebar = dbc.Col(
                     [
                         dbc.Col(dbc.Card(
                             [
-                                dbc.CardHeader("Total de CD\'s"),
+                                dbc.CardHeader("CD\'s"),
                                 dbc.CardBody(
                                     [
                                         html.H5(df.groupby(['MEDIA'])['MEDIA'].count(),
+                                                className="card-title"),
+                                    ]
+                                ),
+                            ], color="success", outline=True)
+                        ),
+                        dbc.Col(dbc.Card(
+                            [
+                                dbc.CardHeader("LP\'s"),
+                                dbc.CardBody(
+                                    [
+                                        html.H5(len(df.index),
                                                 className="card-title"),
                                     ]
                                 ),
@@ -167,12 +178,28 @@ total_origin = dbc.Col(
     ), width=12
 )
 
+total_buy = dbc.Col(
+    dcc.Graph(
+        id='total_purchase_graph',
+        figure=px.bar(df.groupby(df['PURCHASE'].dt.year)['PURCHASE'].count(),
+                      labels={
+            "index": "Ano",
+            "value": "Total"
+        },
+            title="Totais por Compra",
+            text_auto=True,
+            height=600
+        ).update_layout(showlegend=False)
+    ), width=12
+)
+
+
 
 content = html.Div([
     dbc.Tabs(
         [
             dbc.Tab([
-                html.Div(id='disco'),
+                dcc.Loading(html.Div(id='disco')),
                 html.Hr(),
                 dbc.Row([
                     dbc.Col(
@@ -185,6 +212,7 @@ content = html.Div([
             ),
             dbc.Tab(total_year, label="Totais por Ano"),
             dbc.Tab(total_origin, label="Totais por Origem"),
+            dbc.Tab(total_buy, label="Totais por Compra"),
         ]
     )
 ], style=CONTENT_STYLE
@@ -211,7 +239,7 @@ app.layout = html.Div(children=[
     dcc.Store(id="pagination_contents", data=1),
     dcc.Store(id="filter_contents", data={}),
     dcc.Store(id='df'),
-    dcc.Loading(content)
+    content
 ])
 
 
@@ -237,12 +265,14 @@ def toggle_modal(n1):
     prevent_initial_callback=True)
 def update_output(value, pagination, _filter):
     cxt = callback_context.triggered
+    _artist = df.groupby('ARTIST', as_index=False)
     if not any(value):
-        max_index = (len(df.index)/10)
-        if len(df.index) > 10:
-            dff = df.iloc[(pagination*10)-10:pagination*10]
+        max_index = int(len(_artist.groups.keys())/10)
+        if max_index > 10:
+            artists = list(_artist.groups.keys())[(pagination*10)-10:pagination*10]
+            dff = df.query(f"ARTIST == @artists").groupby('ARTIST', as_index=False)
         else:
-            dff = df
+            dff = df.groupby('ARTIST', as_index=False)
     else:
         dff = df
         if cxt[0]['prop_id'].split('.')[0] != "pagination_contents":
@@ -250,70 +280,72 @@ def update_output(value, pagination, _filter):
             _filter[_filter_index] = cxt[0]["value"]
         _query = ""
         for key, value in _filter.items():
-            if value.isdigit():
-                _query += f"{key} == {value} & "
-            else:
-                _query += f"{key} == '{value}' & "
+            _query += f"{key} == '{value}' & "
 
         _query = _query[:_query.rfind("&")]
-        dff = dff.query(_query)
-        max_index = int(len(dff.index)/10)
-        if len(dff.index) > 10:
-            dff = dff.iloc[(pagination*10)-10:pagination*10]
+        dff = df.query(_query).groupby('ARTIST', as_index=False)
+        max_index = int(len(dff.groups.keys())/10)
 
-    accord = dbc.Accordion([dbc.AccordionItem([
-        html.H4(f' {data["TITLE"]}', className="card-title bi bi-book"),
-        html.H5(f' {data["ARTIST"]}', className="card-title bi bi-person"),
-        dbc.Row(
-            [
-                dbc.Col(html.Div(
-                    f' RELEASE YEAR: {data["RELEASE_YEAR"]}', className="bi bi-calendar-event")),
-                dbc.Col(
-                    html.Div(f' MEDIA: {data["MEDIA"]}', className="bi bi-vinyl")),
-                dbc.Col(
-                    html.Div(f' PURCHASE: {data["PURCHASE"]}', className="bi bi-cart3")),
-            ],
-            align="start",
-        ),
-        dbc.Row(
-            [
-                dbc.Col(
-                    html.Div(f' ORIGIN: {data["ORIGIN"]}', className="bi bi-house")),
-                dbc.Col(
-                    html.Div(f' IFPI_MASTERING: {data["IFPI_MASTERING"]}', className="bi bi-body-text")),
-                dbc.Col(
-                    html.Div(f' IFPI_MOULD: {data["IFPI_MOULD"]}', className="bi bi-body-text")),
-            ],
-            align="start",
-        ),
-        dbc.Row(
-            [
-                dbc.Col(
-                    html.Div(f' BARCODE: {data["BARCODE"]}', className="bi bi-body-text")),
-                dbc.Col(
-                    html.Div(f' MATRIZ: {data["MATRIZ"]}', className="bi bi-body-text")),
-                dbc.Col(
-                    html.Div(f' LOTE: {data["LOTE"]}', className="bi bi-body-text"))
-            ],
-            align="start",
-        ),
-        dbc.Row(
-            dbc.Col(
-                dbc.Button(
-                    html.I(className="bi bi-pencil"),
-                    color="warning",
-                    outline=True,
-                    className="me-1",
-                    id={
-                        'type': 'edit_button',
-                        'index': f'{random.random()}'
-                    },
-                ), width=2),
-            justify="end",
-        ),
+    accord = dbc.Accordion([
+        dbc.AccordionItem([
+            dbc.Accordion([
+                dbc.AccordionItem([
+                    html.H4(f' {row["TITLE"]}',
+                            className="card-title bi bi-book"),
+                    html.H5(f' {row["ARTIST"]}',
+                            className="card-title bi bi-person"),
+                    dbc.Row(
+                        [
+                            dbc.Col(html.Div(
+                                f' RELEASE YEAR: {row["RELEASE_YEAR"]}', className="bi bi-calendar-event")),
+                            dbc.Col(
+                                html.Div(f' MEDIA: {row["MEDIA"]}', className="bi bi-vinyl")),
+                            dbc.Col(
+                                html.Div(f' PURCHASE: {row["PURCHASE"]}', className="bi bi-cart3")),
+                        ],
+                        align="start",
+                    ),
+                    dbc.Row(
+                        [
+                            dbc.Col(
+                                html.Div(f' ORIGIN: {row["ORIGIN"]}', className="bi bi-house")),
+                            dbc.Col(
+                                html.Div(f' IFPI_MASTERING: {row["IFPI_MASTERING"]}', className="bi bi-body-text")),
+                            dbc.Col(
+                                html.Div(f' IFPI_MOULD: {row["IFPI_MOULD"]}', className="bi bi-body-text")),
+                        ],
+                        align="start",
+                    ),
+                    dbc.Row(
+                        [
+                            dbc.Col(
+                                html.Div(f' BARCODE: {row["BARCODE"]}', className="bi bi-body-text")),
+                            dbc.Col(
+                                html.Div(f' MATRIZ: {row["MATRIZ"]}', className="bi bi-body-text")),
+                            dbc.Col(
+                                html.Div(f' LOTE: {row["LOTE"]}', className="bi bi-body-text"))
+                        ],
+                        align="start",
+                    ),
+                    dbc.Row(
+                        dbc.Col(
+                            dbc.Button(
+                                html.I(className="bi bi-pencil"),
+                                color="warning",
+                                outline=True,
+                                className="me-1",
+                                id={
+                                    'type': 'edit_button',
+                                    'index': f'{random.random()}'
+                                },
+                            ), width=2),
+                        justify="end",
+                    ),
 
-    ], title=f'{data["TITLE"]}',
-    ) for data in dff.to_dict('records')], start_collapsed=True)
+                ], title=f'{row["RELEASE_YEAR"]} - {row["TITLE"]}')
+                for row in group.to_dict('records')], start_collapsed=True)
+        ], title=name,
+        ) for name, group in dff], start_collapsed=True)
     return accord, _filter, max_index
 
 

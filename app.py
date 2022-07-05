@@ -21,6 +21,7 @@ df = MongoDBConn(os.environ['CONNECTION_STRING'],
 app = Dash(__name__, external_stylesheets=[
            dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP])
 
+app.title = 'Music Collection'
 
 sidebar = dbc.Col(
     [

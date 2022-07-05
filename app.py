@@ -44,7 +44,6 @@ sidebar = dbc.Col(
                                 options=[{'label': str(i), 'value': str(i)}
                                          for i in sorted(df['ARTIST'].unique())],
                                 value=None,
-                                clearable=False,
                                 optionHeight=40,
                                 className="me-3"
                             ), width=9
@@ -65,7 +64,6 @@ sidebar = dbc.Col(
                                 options=[{'label': str(i), 'value': str(i)}
                                          for i in sorted(df['MEDIA'].unique())],
                                 value=None,
-                                clearable=False,
                                 className="me-3"
                             ), width=9
                         ),
@@ -85,7 +83,6 @@ sidebar = dbc.Col(
                                 options=[{'label': str(i), 'value': str(i)}
                                          for i in sorted(df['ORIGIN'].dropna().unique())],
                                 value=None,
-                                clearable=False,
                                 className="me-3"
                             ), width=9
                         ),
@@ -150,13 +147,12 @@ sidebar = dbc.Col(
 total_year = dbc.Col(
     dcc.Graph(
         id='total_year_graph',
-        figure=px.bar(df.groupby(['RELEASE_YEAR'])['RELEASE_YEAR'].count(
-        ),
+        figure=px.bar(df.groupby(['RELEASE_YEAR'])['RELEASE_YEAR'].count(),
             labels={
             "index": "Ano",
             "value": "Total"
         },
-            title="Totais por Ano",
+            title="Totais por Ano de Lançamento",
             text_auto=True,
             height=600
         ).update_layout(showlegend=False, hovermode="x unified")
@@ -172,7 +168,7 @@ total_origin = dbc.Col(
             "index": "Origem",
             "value": "Total"
         },
-            title="Totais por Origem",
+            title="Totais por Origem da Mídia",
             text_auto=True,
             height=600
         ).update_layout(showlegend=False)
@@ -363,26 +359,13 @@ def change_page(page):
 @app.callback(
     Output("download_xlsx", "data"),
     Input("download_xlsx_btn", "n_clicks"),
-    State('filter_contents', 'data'),
     prevent_initial_call=True,
 )
-def on_button_click(n, _filter):
-    print(_filter.items())
+def on_button_click(n):
     if n is None:
         raise ""
     else:
-        if len(_filter.items()) > 0:
-            _query = ''
-            for key, value in _filter.items():
-                if value.isdigit():
-                    _query += f"{key} == {value} & "
-                else:
-                    _query += f"{key} == '{value}' & "
-
-            _query = _query[:_query.rfind("&")]
-            return dcc.send_data_frame(df.query(_query).to_excel, "collection.xlsx")
-        else:   
-            return dcc.send_data_frame(df.to_excel, "collection.xlsx")
+        return dcc.send_data_frame(df.to_excel, "collection.xlsx")
 
 
 if __name__ == '__main__':

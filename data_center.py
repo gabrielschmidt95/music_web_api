@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+from bson import ObjectId
 import pandas as pd
 
 class MongoDBConn(MongoClient):
@@ -12,6 +13,8 @@ class MongoDBConn(MongoClient):
 
     def qyery(self, coll, query=""):
         df = pd.DataFrame(list(self.conn[coll].find(query)))
-        df.drop('_id', inplace=True, axis=1)
         df["PURCHASE"] = df["PURCHASE"].astype('datetime64[ns]')
         return  df
+    
+    def find_one(self, coll, id):
+        return self.conn[coll].find_one(ObjectId(id))

@@ -31,64 +31,7 @@ sidebar = dbc.Col(
         html.Hr(),
         dbc.Form(
             [
-                dbc.Row(
-                    [
-                        dbc.Label(" Artista", width=3,
-                                  className="bi bi-person"),
-                        dbc.Col(
-                            dcc.Dropdown(
-                                id={
-                                    'type': 'filter-dropdown',
-                                    'index': 'ARTIST'
-                                },
-                                options=[{'label': str(i), 'value': str(i)}
-                                         for i in sorted(df['ARTIST'].unique())],
-                                value=None,
-                                optionHeight=40,
-                                className="me-3"
-                            ), width=9
-                        ),
-                    ],
-                    className="g-2",
-                ),
-                html.Hr(),
-                dbc.Row(
-                    [
-                        dbc.Label(" Media", width=3, className="bi bi-vinyl"),
-                        dbc.Col(
-                            dcc.Dropdown(
-                                id={
-                                    'type': 'filter-dropdown',
-                                    'index': 'MEDIA'
-                                },
-                                options=[{'label': str(i), 'value': str(i)}
-                                         for i in sorted(df['MEDIA'].unique())],
-                                value=None,
-                                className="me-3"
-                            ), width=9
-                        ),
-                    ],
-                    className="g-2",
-                ),
-                html.Hr(),
-                dbc.Row(
-                    [
-                        dbc.Label(" Origem", width=3, className="bi bi-house"),
-                        dbc.Col(
-                            dcc.Dropdown(
-                                id={
-                                    'type': 'filter-dropdown',
-                                    'index': 'ORIGIN'
-                                },
-                                options=[{'label': str(i), 'value': str(i)}
-                                         for i in sorted(df['ORIGIN'].dropna().unique())],
-                                value=None,
-                                className="me-3"
-                            ), width=9
-                        ),
-                    ],
-                    className="g-2",
-                ),
+                html.Div(id="drop"),
                 html.Hr(),
                 dbc.Row(
                     [
@@ -116,7 +59,7 @@ sidebar = dbc.Col(
                         ),
                         dbc.Col(dbc.Card(
                             [
-                                dbc.CardHeader("Total Geral"),
+                                dbc.CardHeader("DVD\'s"),
                                 dbc.CardBody(
                                     [
                                         html.H5(len(df.index),
@@ -125,6 +68,17 @@ sidebar = dbc.Col(
                                 ),
                             ], color="success", outline=True)
                         ),
+                        dbc.Col(dbc.Card(
+                            [
+                                dbc.CardHeader("BL\'s"),
+                                dbc.CardBody(
+                                    [
+                                        html.H5(df.groupby(['MEDIA'])['MEDIA'].count(),
+                                                className="card-title"),
+                                    ]
+                                ),
+                            ], color="success", outline=True)
+                        )
                     ],
                     className="g-2",
                 ),
@@ -148,30 +102,15 @@ total_year = dbc.Col(
     dcc.Graph(
         id='total_year_graph',
         figure=px.bar(df.groupby(['RELEASE_YEAR'])['RELEASE_YEAR'].count(),
-            labels={
+                      labels={
             "index": "Ano",
             "value": "Total"
         },
-            title="Totais por Ano de Lançamento",
+            title="Ano de Lançamento",
             text_auto=True,
             height=600
         ).update_layout(showlegend=False, hovermode="x unified")
         .update_traces(hovertemplate='Total: %{y}<extra></extra>')
-    ), width=12
-)
-
-total_origin = dbc.Col(
-    dcc.Graph(
-        id='total_origin_graph',
-        figure=px.bar(df.groupby(['ORIGIN'])['ORIGIN'].count().sort_values(ascending=False),
-                      labels={
-            "index": "Origem",
-            "value": "Total"
-        },
-            title="Totais por Origem da Mídia",
-            text_auto=True,
-            height=600
-        ).update_layout(showlegend=False)
     ), width=12
 )
 
@@ -183,13 +122,12 @@ total_buy = dbc.Col(
             "index": "Ano",
             "value": "Total"
         },
-            title="Totais por Compra",
+            title="Ano de Aquisição",
             text_auto=True,
             height=600
         ).update_layout(showlegend=False)
     ), width=12
 )
-
 
 
 content = html.Div([
@@ -207,9 +145,8 @@ content = html.Div([
                     )], justify="center"
                 )], label="Lista"
             ),
-            dbc.Tab(total_year, label="Totais por Ano"),
-            dbc.Tab(total_origin, label="Totais por Origem"),
-            dbc.Tab(total_buy, label="Totais por Compra"),
+            dbc.Tab(total_year, label="Ano de Lançamento"),
+            dbc.Tab(total_buy, label="Ano de Aquisição"),
         ]
     )
 ], style=CONTENT_STYLE
@@ -253,6 +190,81 @@ def toggle_modal(n1):
 
 
 @app.callback(
+    Output("drop", 'children'),
+    Input('filter_contents', 'data'),
+    prevent_initial_call=True
+)
+def toggle_modal(_filter):
+    if _filter != {}:
+        _query = ""
+        for key, value in _filter.items():
+            _query += f"{key} == '{value}' & "
+
+        _query = _query[:_query.rfind("&")]
+        dff = df.query(_query)
+    else:
+        dff = df
+    return [dbc.Row(
+        [
+            dbc.Label(" Artista", width=3,
+                      className="bi bi-person"),
+            dbc.Col(
+                dcc.Dropdown(
+                    id={
+                        'type': 'filter-dropdown',
+                        'index': 'ARTIST'
+                    },
+                    options=[{'label': str(i), 'value': str(i)}
+                             for i in sorted(dff['ARTIST'].unique())],
+                    value=_filter["ARTIST"] if "ARTIST" in _filter else None,
+                    optionHeight=40,
+                    className="me-3"
+                ), width=9
+            ),
+        ],
+        className="g-2",
+    ),
+        html.Hr(),
+        dbc.Row(
+        [
+            dbc.Label(" Media", width=3, className="bi bi-vinyl"),
+            dbc.Col(
+                dcc.Dropdown(
+                    id={
+                        'type': 'filter-dropdown',
+                        'index': 'MEDIA'
+                    },
+                    options=[{'label': str(i), 'value': str(i)}
+                             for i in sorted(dff['MEDIA'].unique())],
+                    value=_filter["MEDIA"] if "MEDIA" in _filter else None,
+                    className="me-3"
+                ), width=9
+            ),
+        ],
+        className="g-2",
+    ),
+        html.Hr(),
+        dbc.Row(
+        [
+            dbc.Label(" Origem", width=3, className="bi bi-house"),
+            dbc.Col(
+                dcc.Dropdown(
+                    id={
+                        'type': 'filter-dropdown',
+                        'index': 'ORIGIN'
+                    },
+                    options=[{'label': str(i), 'value': str(i)}
+                             for i in sorted(dff    ['ORIGIN'].dropna().unique())],
+                    value=_filter["ORIGIN"] if "ORIGIN" in _filter else None,
+                    className="me-3"
+                ), width=9
+            ),
+        ],
+        className="g-2",
+    )]
+
+
+@app.callback(
     Output('disco', 'children'),
     Output('filter_contents', 'data'),
     Output('pagination', 'max_value'),
@@ -264,10 +276,14 @@ def update_output(value, pagination, _filter):
     cxt = callback_context.triggered
     _artist = df.groupby('ARTIST', as_index=False)
     if not any(value):
+        if cxt[0]['prop_id'] !='.':
+            _filter.pop(loads(cxt[0]['prop_id'].split('.')[0])["index"])
         max_index = int(len(_artist.groups.keys())/10)
         if max_index > 10:
-            artists = list(_artist.groups.keys())[(pagination*10)-10:pagination*10]
-            dff = df.query(f"ARTIST == @artists").groupby('ARTIST', as_index=False)
+            artists = list(_artist.groups.keys())[
+                (pagination*10)-10:pagination*10]
+            dff = df.query(
+                f"ARTIST == @artists").groupby('ARTIST', as_index=False)
         else:
             dff = df.groupby('ARTIST', as_index=False)
     else:
@@ -275,14 +291,17 @@ def update_output(value, pagination, _filter):
         if cxt[0]['prop_id'].split('.')[0] != "pagination_contents":
             _filter_index = loads(cxt[0]['prop_id'].split('.')[0])["index"]
             _filter[_filter_index] = cxt[0]["value"]
+            _filter = dict((k, v) for k, v in _filter.items() if v is not None)
         _query = ""
         for key, value in _filter.items():
             _query += f"{key} == '{value}' & "
 
         _query = _query[:_query.rfind("&")]
-        dff = df.query(_query).groupby('ARTIST', as_index=False)
-        max_index = int(len(dff.groups.keys())/10)
-
+        _artist = df.query(_query).groupby('ARTIST', as_index=False)
+        artists = list(_artist.groups.keys())[(pagination*10)-10:pagination*10]
+        dff = df.query(f"ARTIST == @artists").groupby('ARTIST', as_index=False)
+        max_index = int(len(_artist.groups.keys())/10)
+    print(_filter)
     accord = dbc.Accordion([
         dbc.AccordionItem([
             dbc.Accordion([

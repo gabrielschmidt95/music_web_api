@@ -1,5 +1,5 @@
 from dash import Dash, html, dcc, Input, Output, State, callback_context, ALL
-from assets.styles import *
+from datetime import datetime, date
 from data_center import MongoDBConn
 import dash_bootstrap_components as dbc
 from json import loads
@@ -95,7 +95,7 @@ sidebar = dbc.Col(
 
             ])
     ],
-    style=SIDEBAR_STYLE,
+    className="custom-sidebar"
 )
 
 total_year = dbc.Col(
@@ -149,7 +149,7 @@ content = html.Div([
             dbc.Tab(total_buy, label="Ano de Aquisição"),
         ]
     )
-], style=CONTENT_STYLE
+], className='custom-content'
 )
 
 
@@ -241,10 +241,14 @@ def toggle_modal(value):
             [
                 dbc.Label("PURCHASE", html_for="PURCHASE_EDIT", width=6),
                 dbc.Col(
-                    dbc.Input(
-                        type="number",
-                        id="PURCHASE_EDIT",
-                        value=media["PURCHASE"] if "PURCHASE" in media else None
+                    dcc.DatePickerSingle(
+                        id='PURCHASE_EDIT',
+                        min_date_allowed=date(1900, 8, 5),
+                        max_date_allowed=datetime.now(),
+                        initial_visible_month=datetime.now(),
+                        display_format='DD/MM/YYYY',
+                        date=media["PURCHASE"] if "PURCHASE" in media else None,
+                        style={"border-radius": "0.5rem", "width": "100%"}
                     ),
                     width=6,
                 ),

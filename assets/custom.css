@@ -1,0 +1,33 @@
+.DateInput, .DateInput_1 {
+    border-radius: 4px 0 0 4px !important;
+    Width: 100% !important;
+}
+
+.DateInput_input, .DateInput_input_1 {
+    Height: 34px !important;
+    Width: 100% !important;
+    border-radius: inherit;
+}
+
+.SingleDatePickerInput__withBorder {
+    border-radius: 4px 0 0 4px;
+    border: 1px solid #ccc !important;
+}
+
+.custom-sidebar {
+    position: fixed;
+    overflow: auto;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 25rem;
+    padding: 2rem 1rem;
+    background-color: #f8f9fa;
+}
+
+
+.custom-content {
+    margin-left: 26rem;
+    margin-right: 2rem;
+    padding: 2rem 1rem;
+}

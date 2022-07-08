@@ -181,7 +181,7 @@ def toggle_modal(value):
                     dbc.Input(
                         type="number",
                         id="RELEASE_YEAR_EDIT",
-                        value=media["RELEASE_YEAR"]
+                        value=media["RELEASE_YEAR"] if "RELEASE_YEAR" in media else None,
                     ),
                     width=6,
                 ),
@@ -196,7 +196,7 @@ def toggle_modal(value):
                     dbc.Input(
                         type="text",
                         id="ARTIST_EDIT",
-                        value=media["ARTIST"],
+                        value=media["ARTIST"] if "ARTIST" in media else None,
                     ),
                     width=6,
                 ),
@@ -211,7 +211,7 @@ def toggle_modal(value):
                     dbc.Input(
                         type="text",
                         id="TITLE_EDIT",
-                        value=media["TITLE"],
+                        value=media["TITLE"] if "TITLE" in media else None,
                     ),
                     width=6,
                 ),
@@ -227,7 +227,7 @@ def toggle_modal(value):
                         id="MEDIA_EDIT",
                         options=[{'label': str(i), 'value': str(i)}
                                  for i in sorted(df['MEDIA'].unique())],
-                        value=media["MEDIA"],
+                        value=media["MEDIA"] if "MEDIA" in media else None,
                         optionHeight=40,
                         clearable=False,
                     ),
@@ -244,7 +244,7 @@ def toggle_modal(value):
                     dbc.Input(
                         type="number",
                         id="PURCHASE_EDIT",
-                        value=media["PURCHASE"]
+                        value=media["PURCHASE"] if "PURCHASE" in media else None
                     ),
                     width=6,
                 ),
@@ -259,7 +259,7 @@ def toggle_modal(value):
                     dbc.Input(
                         type="text",
                         id="ORIGIN_EDIT",
-                        value=media["ORIGIN"],
+                        value=media["ORIGIN"] if "ORIGIN" in media else None,
                     ),
                     width=6,
                 ),
@@ -275,7 +275,7 @@ def toggle_modal(value):
                     dbc.Input(
                         type="number",
                         id="EDITION_YEAR_EDIT",
-                        value=media["EDITION_YEAR"]
+                        value=media["EDITION_YEAR"] if "EDITION_YEAR" in media else None,
                     ),
                     width=6,
                 ),
@@ -285,12 +285,13 @@ def toggle_modal(value):
 
         ifpi_mastering_edit = dbc.Row(
             [
-                dbc.Label("IFPI MASTERING", html_for="IFPI_MASTERING_EDIT", width=6),
+                dbc.Label("IFPI MASTERING",
+                          html_for="IFPI_MASTERING_EDIT", width=6),
                 dbc.Col(
                     dbc.Input(
                         type="text",
                         id="IFPI_MASTERING_EDIT",
-                        value=media["IFPI_MASTERING"],
+                        value=media["IFPI_MASTERING"] if "IFPI_MASTERING" in media else None,
                     ),
                     width=6,
                 ),
@@ -305,7 +306,7 @@ def toggle_modal(value):
                     dbc.Input(
                         type="text",
                         id="IFPI_MOULD_EDIT",
-                        value=media["IFPI_MOULD"],
+                        value=media["IFPI_MOULD"] if "IFPI_MOULD" in media else None,
                     ),
                     width=6,
                 ),
@@ -320,7 +321,7 @@ def toggle_modal(value):
                     dbc.Input(
                         type="text",
                         id="BARCODE_EDIT",
-                        value=media["BARCODE"],
+                        value=media["BARCODE"] if "BARCODE" in media else None,
                     ),
                     width=6,
                 ),
@@ -335,7 +336,7 @@ def toggle_modal(value):
                     dbc.Input(
                         type="text",
                         id="LOTE_EDIT",
-                        value=media["LOTE"],
+                        value=media["LOTE"] if "LOTE" in media else None,
                     ),
                     width=6,
                 ),
@@ -349,7 +350,7 @@ def toggle_modal(value):
                 dbc.Col(
                     dbc.Textarea(
                         id="MATRIZ_EDIT",
-                        value=media["MATRIZ"],
+                        value=media["MATRIZ"] if "MATRIZ" in media else None,
                     ),
                     width=6,
                 ),
@@ -357,10 +358,10 @@ def toggle_modal(value):
             className="mb-3",
         )
 
-
         return dbc.Modal(
             [
-                dbc.ModalHeader(dbc.ModalTitle(f"{media['ARTIST']} - {media['TITLE']}")),
+                dbc.ModalHeader(dbc.ModalTitle(
+                    f"{media['ARTIST']} - {media['TITLE']}")),
                 dbc.ModalBody(
                     dbc.Form([
                         release_year_edit,
@@ -499,7 +500,8 @@ def update_output(value, pagination, _filter):
         _query = _query[:_query.rfind("&")]
         _artist = df.query(_query).groupby('ARTIST', as_index=False)
         artists = list(_artist.groups.keys())[(pagination*10)-10:pagination*10]
-        dff = df.query(f"ARTIST == @artists").query(_query).groupby('ARTIST', as_index=False)
+        dff = df.query(
+            f"ARTIST == @artists").query(_query).groupby('ARTIST', as_index=False)
         max_index = int(len(_artist.groups.keys())/10)
     accord = dbc.Accordion([
         dbc.AccordionItem([

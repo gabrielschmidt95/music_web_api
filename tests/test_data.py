@@ -7,7 +7,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 load_dotenv()
 
-COLUMNS = ('RELEASE_YEAR', 'ARTIST', 'TITLE', 'MEDIA', 'PURCHASE', 'ORIGIN',
+COLUMNS = ("_id",'RELEASE_YEAR', 'ARTIST', 'TITLE', 'MEDIA', 'PURCHASE', 'ORIGIN',
        'EDITION_YEAR', 'IFPI_MASTERING', 'IFPI_MOULD', 'BARCODE',
        'MATRIZ', 'LOTE')
 

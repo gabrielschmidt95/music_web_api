@@ -499,7 +499,7 @@ def update_output(value, pagination, _filter):
         _query = _query[:_query.rfind("&")]
         _artist = df.query(_query).groupby('ARTIST', as_index=False)
         artists = list(_artist.groups.keys())[(pagination*10)-10:pagination*10]
-        dff = df.query(f"ARTIST == @artists").groupby('ARTIST', as_index=False)
+        dff = df.query(f"ARTIST == @artists").query(_query).groupby('ARTIST', as_index=False)
         max_index = int(len(_artist.groups.keys())/10)
     accord = dbc.Accordion([
         dbc.AccordionItem([

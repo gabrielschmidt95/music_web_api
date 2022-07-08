@@ -40,7 +40,7 @@ sidebar = dbc.Col(
                                 dbc.CardHeader("CD\'s"),
                                 dbc.CardBody(
                                     [
-                                        html.H5(df.groupby(['MEDIA'])['MEDIA'].count(),
+                                        html.H5(len(df.query("MEDIA=='CD'").index),
                                                 className="card-title"),
                                     ]
                                 ),
@@ -51,7 +51,7 @@ sidebar = dbc.Col(
                                 dbc.CardHeader("LP\'s"),
                                 dbc.CardBody(
                                     [
-                                        html.H5(len(df.index),
+                                        html.H5(len(df.query("MEDIA=='LP'").index),
                                                 className="card-title"),
                                     ]
                                 ),
@@ -62,7 +62,7 @@ sidebar = dbc.Col(
                                 dbc.CardHeader("DVD\'s"),
                                 dbc.CardBody(
                                     [
-                                        html.H5(len(df.index),
+                                        html.H5(len(df.query("MEDIA=='DVD'").index),
                                                 className="card-title"),
                                     ]
                                 ),
@@ -73,7 +73,7 @@ sidebar = dbc.Col(
                                 dbc.CardHeader("BL\'s"),
                                 dbc.CardBody(
                                     [
-                                        html.H5(df.groupby(['MEDIA'])['MEDIA'].count(),
+                                        html.H5(len(df.query("MEDIA=='BL'").index),
                                                 className="card-title"),
                                     ]
                                 ),

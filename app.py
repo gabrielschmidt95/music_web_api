@@ -1,10 +1,9 @@
 from dash import Dash, html, dcc, Input, Output, State, callback_context, ALL
-from assets.styles import *
+from datetime import datetime, date
 from data_center import MongoDBConn
 import dash_bootstrap_components as dbc
 from json import loads
 from dotenv import load_dotenv
-import random
 import plotly.express as px
 
 import os
@@ -14,9 +13,10 @@ load_dotenv()
 
 port = int(os.environ.get("PORT", 5000))
 
+conn = MongoDBConn(os.environ['CONNECTION_STRING'],
+                   os.environ['DATABASE'])
 
-df = MongoDBConn(os.environ['CONNECTION_STRING'],
-                 os.environ['DATABASE']).qyery("CD")
+df = conn.qyery("CD")
 
 app = Dash(__name__, external_stylesheets=[
            dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP])
@@ -40,7 +40,7 @@ sidebar = dbc.Col(
                                 dbc.CardHeader("CD\'s"),
                                 dbc.CardBody(
                                     [
-                                        html.H5(df.groupby(['MEDIA'])['MEDIA'].count(),
+                                        html.H5(len(df.query("MEDIA=='CD'").index),
                                                 className="card-title"),
                                     ]
                                 ),
@@ -51,7 +51,7 @@ sidebar = dbc.Col(
                                 dbc.CardHeader("LP\'s"),
                                 dbc.CardBody(
                                     [
-                                        html.H5(len(df.index),
+                                        html.H5(len(df.query("MEDIA=='LP'").index),
                                                 className="card-title"),
                                     ]
                                 ),
@@ -62,7 +62,7 @@ sidebar = dbc.Col(
                                 dbc.CardHeader("DVD\'s"),
                                 dbc.CardBody(
                                     [
-                                        html.H5(len(df.index),
+                                        html.H5(len(df.query("MEDIA=='DVD'").index),
                                                 className="card-title"),
                                     ]
                                 ),
@@ -73,7 +73,7 @@ sidebar = dbc.Col(
                                 dbc.CardHeader("BL\'s"),
                                 dbc.CardBody(
                                     [
-                                        html.H5(df.groupby(['MEDIA'])['MEDIA'].count(),
+                                        html.H5(len(df.query("MEDIA=='BL'").index),
                                                 className="card-title"),
                                     ]
                                 ),
@@ -95,7 +95,7 @@ sidebar = dbc.Col(
 
             ])
     ],
-    style=SIDEBAR_STYLE,
+    className="custom-sidebar"
 )
 
 total_year = dbc.Col(
@@ -149,27 +149,13 @@ content = html.Div([
             dbc.Tab(total_buy, label="Ano de Aquisição"),
         ]
     )
-], style=CONTENT_STYLE
-)
-
-modal = dbc.Modal(
-    [
-        dbc.ModalHeader(dbc.ModalTitle("Header")),
-        dbc.ModalBody("This is the content of the modal"),
-        dbc.ModalFooter(
-            dbc.Button(
-                "Save", id="save", className="ms-auto", n_clicks=0
-            )
-        ),
-    ],
-    id="modal",
-    is_open=False,
+], className='custom-content'
 )
 
 
 app.layout = html.Div(children=[
     sidebar,
-    modal,
+    html.Div(id='modal'),
     dcc.Store(id="pagination_contents", data=1),
     dcc.Store(id="filter_contents", data={}),
     dcc.Store(id='df'),
@@ -178,15 +164,234 @@ app.layout = html.Div(children=[
 
 
 @app.callback(
-    Output("modal", "is_open"),
+    Output("modal", "children"),
     Input({'type': 'edit_button', 'index': ALL}, 'n_clicks'),
     prevent_initial_call=True
 )
-def toggle_modal(n1):
+def toggle_modal(value):
     cxt = callback_context.triggered
-    if not cxt[0]['value']:
-        return False
-    return True
+    if cxt[0]['value']:
+        _id = loads(cxt[0]['prop_id'].split('.')[0])["index"]
+        media = conn.find_one("CD", _id)
+        release_year_edit = dbc.Row(
+            [
+                dbc.Label("RELEASE YEAR",
+                          html_for="RELEASE_YEAR_EDIT", width=6),
+                dbc.Col(
+                    dbc.Input(
+                        type="number",
+                        id="RELEASE_YEAR_EDIT",
+                        value=media["RELEASE_YEAR"] if "RELEASE_YEAR" in media else None,
+                    ),
+                    width=6,
+                ),
+            ],
+            className="mb-3",
+        )
+
+        artist_edit = dbc.Row(
+            [
+                dbc.Label("ARTIST", html_for="ARTIST_EDIT", width=6),
+                dbc.Col(
+                    dbc.Input(
+                        type="text",
+                        id="ARTIST_EDIT",
+                        value=media["ARTIST"] if "ARTIST" in media else None,
+                    ),
+                    width=6,
+                ),
+            ],
+            className="mb-3",
+        )
+
+        title_edit = dbc.Row(
+            [
+                dbc.Label("ARTIST", html_for="TITLE_EDIT", width=6),
+                dbc.Col(
+                    dbc.Input(
+                        type="text",
+                        id="TITLE_EDIT",
+                        value=media["TITLE"] if "TITLE" in media else None,
+                    ),
+                    width=6,
+                ),
+            ],
+            className="mb-3",
+        )
+
+        media_edit = dbc.Row(
+            [
+                dbc.Label("MEDIA", html_for="MEDIA_EDIT", width=6),
+                dbc.Col(
+                    dcc.Dropdown(
+                        id="MEDIA_EDIT",
+                        options=[{'label': str(i), 'value': str(i)}
+                                 for i in sorted(df['MEDIA'].unique())],
+                        value=media["MEDIA"] if "MEDIA" in media else None,
+                        optionHeight=40,
+                        clearable=False,
+                    ),
+                    width=6,
+                ),
+            ],
+            className="mb-3",
+        )
+
+        purchase_edit = dbc.Row(
+            [
+                dbc.Label("PURCHASE", html_for="PURCHASE_EDIT", width=6),
+                dbc.Col(
+                    dcc.DatePickerSingle(
+                        id='PURCHASE_EDIT',
+                        min_date_allowed=date(1900, 8, 5),
+                        max_date_allowed=datetime.now(),
+                        initial_visible_month=datetime.now(),
+                        display_format='DD/MM/YYYY',
+                        date=media["PURCHASE"] if "PURCHASE" in media else None,
+                        style={"border-radius": "0.5rem", "width": "100%"}
+                    ),
+                    width=6,
+                ),
+            ],
+            className="mb-3",
+        )
+
+        origin_edit = dbc.Row(
+            [
+                dbc.Label("ORIGEM", html_for="ORIGIN_EDIT", width=6),
+                dbc.Col(
+                    dbc.Input(
+                        type="text",
+                        id="ORIGIN_EDIT",
+                        value=media["ORIGIN"] if "ORIGIN" in media else None,
+                    ),
+                    width=6,
+                ),
+            ],
+            className="mb-3",
+        )
+
+        edition_year_edit = dbc.Row(
+            [
+                dbc.Label("EDITION YEAR",
+                          html_for="EDITION_YEAR_EDIT", width=6),
+                dbc.Col(
+                    dbc.Input(
+                        type="number",
+                        id="EDITION_YEAR_EDIT",
+                        value=media["EDITION_YEAR"] if "EDITION_YEAR" in media else None,
+                    ),
+                    width=6,
+                ),
+            ],
+            className="mb-3",
+        )
+
+        ifpi_mastering_edit = dbc.Row(
+            [
+                dbc.Label("IFPI MASTERING",
+                          html_for="IFPI_MASTERING_EDIT", width=6),
+                dbc.Col(
+                    dbc.Input(
+                        type="text",
+                        id="IFPI_MASTERING_EDIT",
+                        value=media["IFPI_MASTERING"] if "IFPI_MASTERING" in media else None,
+                    ),
+                    width=6,
+                ),
+            ],
+            className="mb-3",
+        )
+
+        ifpi_mould_edit = dbc.Row(
+            [
+                dbc.Label("IFPI MOULD", html_for="IFPI_MOULD_EDIT", width=6),
+                dbc.Col(
+                    dbc.Input(
+                        type="text",
+                        id="IFPI_MOULD_EDIT",
+                        value=media["IFPI_MOULD"] if "IFPI_MOULD" in media else None,
+                    ),
+                    width=6,
+                ),
+            ],
+            className="mb-3",
+        )
+
+        barcode_edit = dbc.Row(
+            [
+                dbc.Label("BARCODE", html_for="BARCODE_EDIT", width=6),
+                dbc.Col(
+                    dbc.Input(
+                        type="text",
+                        id="BARCODE_EDIT",
+                        value=media["BARCODE"] if "BARCODE" in media else None,
+                    ),
+                    width=6,
+                ),
+            ],
+            className="mb-3",
+        )
+
+        lote_edit = dbc.Row(
+            [
+                dbc.Label("LOTE", html_for="LOTE_EDIT", width=6),
+                dbc.Col(
+                    dbc.Input(
+                        type="text",
+                        id="LOTE_EDIT",
+                        value=media["LOTE"] if "LOTE" in media else None,
+                    ),
+                    width=6,
+                ),
+            ],
+            className="mb-3",
+        )
+
+        matriz_edit = dbc.Row(
+            [
+                dbc.Label("MATRIZ", html_for="MATRIZ_EDIT", width=6),
+                dbc.Col(
+                    dbc.Textarea(
+                        id="MATRIZ_EDIT",
+                        value=media["MATRIZ"] if "MATRIZ" in media else None,
+                    ),
+                    width=6,
+                ),
+            ],
+            className="mb-3",
+        )
+
+        return dbc.Modal(
+            [
+                dbc.ModalHeader(dbc.ModalTitle(
+                    f"{media['ARTIST']} - {media['TITLE']}")),
+                dbc.ModalBody(
+                    dbc.Form([
+                        release_year_edit,
+                        artist_edit,
+                        title_edit,
+                        media_edit,
+                        purchase_edit,
+                        origin_edit,
+                        edition_year_edit,
+                        ifpi_mastering_edit,
+                        ifpi_mould_edit,
+                        barcode_edit,
+                        matriz_edit,
+                        lote_edit
+                    ])
+                ),
+                dbc.ModalFooter(
+                    dbc.Button(
+                        "Save", id="save", className="ms-auto", n_clicks=0
+                    )
+                ),
+            ],
+            is_open=True,
+        )
+    else:
+        return ""
 
 
 @app.callback(
@@ -254,7 +459,7 @@ def toggle_modal(_filter):
                         'index': 'ORIGIN'
                     },
                     options=[{'label': str(i), 'value': str(i)}
-                             for i in sorted(dff    ['ORIGIN'].dropna().unique())],
+                             for i in sorted(dff['ORIGIN'].dropna().unique())],
                     value=_filter["ORIGIN"] if "ORIGIN" in _filter else None,
                     className="me-3"
                 ), width=9
@@ -276,7 +481,7 @@ def update_output(value, pagination, _filter):
     cxt = callback_context.triggered
     _artist = df.groupby('ARTIST', as_index=False)
     if not any(value):
-        if cxt[0]['prop_id'] !='.':
+        if cxt[0]['prop_id'] != '.':
             _filter.pop(loads(cxt[0]['prop_id'].split('.')[0])["index"])
         max_index = int(len(_artist.groups.keys())/10)
         if max_index > 10:
@@ -299,9 +504,9 @@ def update_output(value, pagination, _filter):
         _query = _query[:_query.rfind("&")]
         _artist = df.query(_query).groupby('ARTIST', as_index=False)
         artists = list(_artist.groups.keys())[(pagination*10)-10:pagination*10]
-        dff = df.query(f"ARTIST == @artists").groupby('ARTIST', as_index=False)
+        dff = df.query(
+            f"ARTIST == @artists").query(_query).groupby('ARTIST', as_index=False)
         max_index = int(len(_artist.groups.keys())/10)
-    print(_filter)
     accord = dbc.Accordion([
         dbc.AccordionItem([
             dbc.Accordion([
@@ -352,7 +557,7 @@ def update_output(value, pagination, _filter):
                                 className="me-1",
                                 id={
                                     'type': 'edit_button',
-                                    'index': f'{random.random()}'
+                                    'index': f"{row['_id']}"
                                 },
                             ), width=2),
                         justify="end",

@@ -13,8 +13,10 @@ load_dotenv()
 
 port = int(os.environ.get("PORT", 5000))
 
-conn = MongoDBConn(os.environ['CONNECTION_STRING'],
-                   os.environ['DATABASE'])
+conn = MongoDBConn(
+    os.environ['CONNECTION_STRING'],
+    os.environ['DATABASE']
+)
 
 df = conn.qyery("CD")
 
@@ -432,7 +434,7 @@ def toggle_modal(_filter):
         html.Hr(),
         dbc.Row(
         [
-            dbc.Label(" Media", width=3, className="bi bi-vinyl"),
+            dbc.Label(" Media", width=3, className="bi bi-disc"),
             dbc.Col(
                 dcc.Dropdown(
                     id={
@@ -550,8 +552,8 @@ def update_output(value, pagination, _filter):
                     ),
                     dbc.Row(
                         dbc.Col(
-                            dbc.Button(
-                                html.I(className="bi bi-pencil"),
+                            [dbc.Button(
+                                html.I(className="bi bi-pencil-fill"),
                                 color="warning",
                                 outline=True,
                                 className="me-1",
@@ -559,12 +561,21 @@ def update_output(value, pagination, _filter):
                                     'type': 'edit_button',
                                     'index': f"{row['_id']}"
                                 },
-                            ), width=2),
+                            ),dbc.Button(
+                                html.I(className="bi bi-trash2-fill"),
+                                color="danger",
+                                outline=True,
+                                className="me-1",
+                                id={
+                                    'type': 'delete_button',
+                                    'index': f"{row['_id']}"
+                                },
+                            )], width=2),
                         justify="end",
                     ),
 
                 ], title=f'{row["RELEASE_YEAR"]} - {row["TITLE"]}')
-                for row in group.to_dict('records')], start_collapsed=True)
+                for row in group.sort_values("RELEASE_YEAR").to_dict('records')], start_collapsed=True)
         ], title=name,
         ) for name, group in dff], start_collapsed=True)
     return accord, _filter, max_index

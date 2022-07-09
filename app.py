@@ -1,21 +1,20 @@
-from dash import Dash, html, dcc, Input, Output, State, callback_context, ALL
+from dash import Dash, html, dcc, Input, Output, State, callback_context, ALL, MATCH
+import dash_bootstrap_components as dbc
 from datetime import datetime, date
 from data_center import MongoDBConn
-import dash_bootstrap_components as dbc
-from json import loads
 from dotenv import load_dotenv
 import plotly.express as px
-
-import os
+from json import loads
+from os import environ
 
 
 load_dotenv()
 
-port = int(os.environ.get("PORT", 5000))
+port = int(environ.get("PORT", 5000))
 
 conn = MongoDBConn(
-    os.environ['CONNECTION_STRING'],
-    os.environ['DATABASE']
+    environ['CONNECTION_STRING'],
+    environ['DATABASE']
 )
 
 df = conn.qyery("CD")
@@ -166,6 +165,25 @@ app.layout = html.Div(children=[
 
 
 @app.callback(
+    Output({'type': 'edit-data', 'index': MATCH}, "children"),
+    Input({'type': 'edit-data', 'index': MATCH}, "n_clicks"),
+    State({'type': 'edit-data', 'index': ALL}, "value"),
+    State({'type': 'edit-data', 'index': ALL}, "id"),
+    prevent_initial_call=True
+)
+def toggle_modal(value, data, _id):
+    cxt = callback_context.triggered
+    edit = {}
+    id = loads(cxt[0]['prop_id'].split('.')[0])["index"]
+    for x, i in enumerate(_id):
+        edit[i['index']] = data[x]
+
+    del edit[id]
+    conn.replace_one("CD", id, edit)
+    return "Salvo!"
+
+
+@app.callback(
     Output("modal", "children"),
     Input({'type': 'edit_button', 'index': ALL}, 'n_clicks'),
     prevent_initial_call=True
@@ -182,7 +200,7 @@ def toggle_modal(value):
                 dbc.Col(
                     dbc.Input(
                         type="number",
-                        id="RELEASE_YEAR_EDIT",
+                        id={'type': 'edit-data', 'index': "RELEASE_YEAR_EDIT"},
                         value=media["RELEASE_YEAR"] if "RELEASE_YEAR" in media else None,
                     ),
                     width=6,
@@ -197,7 +215,7 @@ def toggle_modal(value):
                 dbc.Col(
                     dbc.Input(
                         type="text",
-                        id="ARTIST_EDIT",
+                        id={'type': 'edit-data', 'index': "ARTIST_EDIT"},
                         value=media["ARTIST"] if "ARTIST" in media else None,
                     ),
                     width=6,
@@ -212,7 +230,7 @@ def toggle_modal(value):
                 dbc.Col(
                     dbc.Input(
                         type="text",
-                        id="TITLE_EDIT",
+                        id={'type': 'edit-data', 'index': "TITLE_EDIT"},
                         value=media["TITLE"] if "TITLE" in media else None,
                     ),
                     width=6,
@@ -226,7 +244,7 @@ def toggle_modal(value):
                 dbc.Label("MEDIA", html_for="MEDIA_EDIT", width=6),
                 dbc.Col(
                     dcc.Dropdown(
-                        id="MEDIA_EDIT",
+                        id={'type': 'edit-data', 'index': "MEDIA_EDIT"},
                         options=[{'label': str(i), 'value': str(i)}
                                  for i in sorted(df['MEDIA'].unique())],
                         value=media["MEDIA"] if "MEDIA" in media else None,
@@ -244,7 +262,7 @@ def toggle_modal(value):
                 dbc.Label("PURCHASE", html_for="PURCHASE_EDIT", width=6),
                 dbc.Col(
                     dcc.DatePickerSingle(
-                        id='PURCHASE_EDIT',
+                        id={'type': 'edit-data', 'index': 'PURCHASE_EDIT'},
                         min_date_allowed=date(1900, 8, 5),
                         max_date_allowed=datetime.now(),
                         initial_visible_month=datetime.now(),
@@ -264,7 +282,7 @@ def toggle_modal(value):
                 dbc.Col(
                     dbc.Input(
                         type="text",
-                        id="ORIGIN_EDIT",
+                        id={'type': 'edit-data', 'index': "ORIGIN_EDIT"},
                         value=media["ORIGIN"] if "ORIGIN" in media else None,
                     ),
                     width=6,
@@ -280,7 +298,7 @@ def toggle_modal(value):
                 dbc.Col(
                     dbc.Input(
                         type="number",
-                        id="EDITION_YEAR_EDIT",
+                        id={'type': 'edit-data', 'index': "EDITION_YEAR_EDIT"},
                         value=media["EDITION_YEAR"] if "EDITION_YEAR" in media else None,
                     ),
                     width=6,
@@ -296,7 +314,7 @@ def toggle_modal(value):
                 dbc.Col(
                     dbc.Input(
                         type="text",
-                        id="IFPI_MASTERING_EDIT",
+                        id={'type': 'edit-data', 'index': "IFPI_MASTERING_EDIT"},
                         value=media["IFPI_MASTERING"] if "IFPI_MASTERING" in media else None,
                     ),
                     width=6,
@@ -311,7 +329,7 @@ def toggle_modal(value):
                 dbc.Col(
                     dbc.Input(
                         type="text",
-                        id="IFPI_MOULD_EDIT",
+                        id={'type': 'edit-data', 'index': "IFPI_MOULD_EDIT"},
                         value=media["IFPI_MOULD"] if "IFPI_MOULD" in media else None,
                     ),
                     width=6,
@@ -326,7 +344,7 @@ def toggle_modal(value):
                 dbc.Col(
                     dbc.Input(
                         type="text",
-                        id="BARCODE_EDIT",
+                        id={'type': 'edit-data', 'index': "BARCODE_EDIT"},
                         value=media["BARCODE"] if "BARCODE" in media else None,
                     ),
                     width=6,
@@ -341,7 +359,7 @@ def toggle_modal(value):
                 dbc.Col(
                     dbc.Input(
                         type="text",
-                        id="LOTE_EDIT",
+                        id={'type': 'edit-data', 'index': "LOTE_EDIT"},
                         value=media["LOTE"] if "LOTE" in media else None,
                     ),
                     width=6,
@@ -355,7 +373,7 @@ def toggle_modal(value):
                 dbc.Label("MATRIZ", html_for="MATRIZ_EDIT", width=6),
                 dbc.Col(
                     dbc.Textarea(
-                        id="MATRIZ_EDIT",
+                        id={'type': 'edit-data', 'index': "MATRIZ_EDIT"},
                         value=media["MATRIZ"] if "MATRIZ" in media else None,
                     ),
                     width=6,
@@ -386,11 +404,14 @@ def toggle_modal(value):
                 ),
                 dbc.ModalFooter(
                     dbc.Button(
-                        "Save", id="save", className="ms-auto", n_clicks=0
+                        "Save", id={
+                            'type': 'edit-data',
+                            'index': f"{media['_id']}"
+                        }, className="ms-auto", n_clicks=0
                     )
                 ),
             ],
-            is_open=True,
+            is_open=True, id='modal'
         )
     else:
         return ""
@@ -561,7 +582,7 @@ def update_output(value, pagination, _filter):
                                     'type': 'edit_button',
                                     'index': f"{row['_id']}"
                                 },
-                            ),dbc.Button(
+                            ), dbc.Button(
                                 html.I(className="bi bi-trash2-fill"),
                                 color="danger",
                                 outline=True,

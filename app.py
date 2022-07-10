@@ -1,4 +1,4 @@
-from dash import html, dcc, Input, Output
+from dash import html, dcc
 from data.data_center import MongoDBConn
 from dotenv import load_dotenv
 from os import environ
@@ -6,6 +6,7 @@ from server import app
 from src.sidebar import Sidebar
 from src.content import Content
 from src.data_modal import Data_Modal
+from utils.downloads import Downloads
 
 load_dotenv()
 
@@ -22,6 +23,7 @@ class CollectionAPP:
         self.df = self.conn.qyery("CD")
         self.sidebar = Sidebar(self.df)
         self.data_modal = Data_Modal(self.df)
+        self.downloads = Downloads(self.df)
         self.create_layout()
         self.create_callbacks()
 
@@ -38,17 +40,8 @@ class CollectionAPP:
     def create_callbacks(self):
         self.sidebar.filters()
         self.data_modal.render()
+        self.downloads.xlsx()
 
-        @app.callback(
-            Output("download_xlsx", "data"),
-            Input("download_xlsx_btn", "n_clicks"),
-            prevent_initial_call=True,
-        )
-        def on_button_click(n):
-            if n is None:
-                raise ""
-            else:
-                return dcc.send_data_frame(self.df.to_excel, "collection.xlsx")
     
     def run(self):
         app.run_server(debug=True, port=5000)

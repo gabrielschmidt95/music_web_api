@@ -105,7 +105,6 @@ class Sidebar:
         )
         def toggle_modal(_filter):
             df = self.conn.qyery("CD")
-            print(_filter)
             if _filter != {}:
                 _query = ""
                 for key, value in _filter.items():

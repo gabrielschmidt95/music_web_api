@@ -13,16 +13,13 @@ load_dotenv()
 class CollectionAPP:
 
     def __init__(self):
-        self.views = []
-        self.tabs = []
         self.conn = MongoDBConn(
             environ['CONNECTION_STRING'],
             environ['DATABASE']
         )
-
         self.df = self.conn.qyery("CD")
         self.sidebar = Sidebar(self.df)
-        self.data_modal = Data_Modal(self.df)
+        self.data_modal = Data_Modal(self.df, self.conn)
         self.downloads = Downloads(self.df)
         self.create_layout()
         self.create_callbacks()
@@ -42,7 +39,6 @@ class CollectionAPP:
         self.data_modal.render()
         self.downloads.xlsx()
 
-    
     def run(self):
         app.run_server(debug=True, port=5000)
 

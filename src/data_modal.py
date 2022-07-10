@@ -6,7 +6,8 @@ import dash_bootstrap_components as dbc
 
 class Data_Modal:
 
-    def __init__(self, df):
+    def __init__(self, df, conn):
+        self.conn = conn
         self.df = df
 
     def render(self):

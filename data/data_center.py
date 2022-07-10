@@ -18,3 +18,12 @@ class MongoDBConn(MongoClient):
     
     def find_one(self, coll, id):
         return self.conn[coll].find_one(ObjectId(id))
+    
+    def replace_one(self, coll, id, replace_data):
+        return self.conn[coll].replace_one({"_id":ObjectId(id)}, replace_data) 
+    
+    def insert_one(self, coll, insert_data):
+        return self.conn[coll].insert_one(insert_data) 
+    
+    def delete_one(self, coll, insert_data):
+        return self.conn[coll].delete_one(insert_data) 

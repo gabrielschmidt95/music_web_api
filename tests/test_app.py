@@ -3,7 +3,7 @@ import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
-from csv_converter import ConvertCSV
+from utils.csv_converter import ConvertCSV
 
 def test_styles():
     assert True == True

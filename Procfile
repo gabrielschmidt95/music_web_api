@@ -1,1 +1,1 @@
-web: waitress-serve --listen=*:$PORT app:app.server
+web: waitress-serve --listen=*:$PORT wsgi:app.server

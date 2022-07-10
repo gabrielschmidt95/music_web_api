@@ -21,3 +21,6 @@ class MongoDBConn(MongoClient):
     
     def replace_one(self, coll, id, replace_data):
         return self.conn[coll].replace_one({"_id":ObjectId(id)}, replace_data) 
+    
+    def insert_one(self, coll, insert_data):
+        return self.conn[coll].insert_one(insert_data) 

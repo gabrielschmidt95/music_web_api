@@ -1,4 +1,4 @@
-from data_center import MongoDBConn
+from data.data_center import MongoDBConn
 from dotenv import load_dotenv
 from typing import NoReturn
 import sys 

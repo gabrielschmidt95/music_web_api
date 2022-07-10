@@ -5,8 +5,7 @@ from os import environ
 from server import app
 from src.sidebar import Sidebar
 from src.content import Content
-from src.data_modal import Data_Modal
-from utils.downloads import Downloads
+from src.modal import Data_Modal
 
 load_dotenv()
 
@@ -18,26 +17,28 @@ class CollectionAPP:
             environ['DATABASE']
         )
         self.df = self.conn.qyery("CD")
-        self.sidebar = Sidebar(self.df)
-        self.data_modal = Data_Modal(self.df, self.conn)
-        self.downloads = Downloads(self.df)
+        self.sidebar = Sidebar(self.conn)
+        self.data_modal = Data_Modal(self.conn)
+        self.content = Content(self.conn)
         self.create_layout()
         self.create_callbacks()
 
     def create_layout(self):
-        app.layout = html.Div(children=[
-            self.sidebar.render(),
-            html.Div(id='modal'),
+        app.layout = html.Div(children=[    
+            self.sidebar.layout(),
+            self.content.layout(),
+            self.data_modal.layout(),
             dcc.Store(id="pagination_contents", data=1),
             dcc.Store(id="filter_contents", data={}),
             dcc.Store(id='df'),
-            Content(self.df).content()
+            dcc.Store(id='edit_id'),
+            dcc.Store(id='delete_id'),
         ])
     
     def create_callbacks(self):
-        self.sidebar.filters()
-        self.data_modal.render()
-        self.downloads.xlsx()
+        self.sidebar.callbacks()
+        self.data_modal.callbacks()
+        self.content.callbacks()
 
     def run(self):
         app.run_server(debug=True, port=5000)

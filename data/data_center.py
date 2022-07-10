@@ -24,3 +24,6 @@ class MongoDBConn(MongoClient):
     
     def insert_one(self, coll, insert_data):
         return self.conn[coll].insert_one(insert_data) 
+    
+    def delete_one(self, coll, insert_data):
+        return self.conn[coll].delete_one(insert_data) 

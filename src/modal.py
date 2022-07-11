@@ -48,14 +48,19 @@ class Data_Modal:
             Output("modal_edit_body", "children"),
             Output("modal_edit", "is_open"),
             Output("edit_id", "data"),
+            Input("insert_btn", "n_clicks"),
             Input({'type': 'edit_button', 'index': ALL}, 'n_clicks'),
             prevent_initial_call=True
         )
-        def fill_edit_modal(value):
+        def fill_edit_modal(insert_btn, value):
             cxt = callback_context.triggered
             if cxt[0]['value']:
-                _id = loads(cxt[0]['prop_id'].split('.')[0])["index"]
-                media = self.conn.find_one("CD", _id)
+                try:
+                    _id = loads(cxt[0]['prop_id'].split('.')[0])["index"]
+                    media = self.conn.find_one("CD", _id)
+                except:
+                    _id = None
+                    media = {}
                 release_year_edit = dbc.Row(
                     [
                         dbc.Label("RELEASE YEAR",
@@ -112,9 +117,12 @@ class Data_Modal:
                                 options=[
                                     {'label': str(i), 'value': str(i)}
                                     for i in sorted(self.conn.qyery("CD")['MEDIA'].unique())],
-                                value=media["MEDIA"] if "MEDIA" in media else None,
+                                value=media["MEDIA"],
                                 optionHeight=40,
                                 clearable=False,
+                            ) if "MEDIA" in media else dbc.Input(
+                                type="text",
+                                id={'type': 'edit-data', 'index': "MEDIA"},
                             ),
                             width=6,
                         ),
@@ -250,7 +258,7 @@ class Data_Modal:
                     ],
                     className="mb-3",
                 )
-                title = f"{media['ARTIST']} - {media['TITLE']}"
+                title = f"{media['ARTIST']} - {media['TITLE']}" if media != {} else "Nova Entrada"
                 body = dbc.Form([
                     release_year_edit,
                     artist_edit,
@@ -265,7 +273,7 @@ class Data_Modal:
                     matriz_edit,
                     lote_edit
                 ])
-                return title, body, True, f"{media['_id']}"
+                return title, body, True, f"{media['_id']}" if "_id" in media else None
             else:
                 return "", "", False, ""
 
@@ -279,12 +287,16 @@ class Data_Modal:
             prevent_initial_call=True
         )
         def replace_on(n_clicks,n_clicks2, data, _id, item_id):
+            if n_clicks2 > 0:
+                return True
             if n_clicks > 0:
                 edit = {}
                 for x, i in enumerate(_id):
                     edit[i['index']] = data[x]
-
-                self.conn.replace_one("CD", item_id, edit)
+                if item_id is not None and item_id != '':
+                    self.conn.replace_one("CD", item_id, edit)
+                else:
+                    self.conn.insert_one("CD", edit)
                 return True
         
         @app.callback(
@@ -300,7 +312,7 @@ class Data_Modal:
             cxt = callback_context.triggered
             _id = cxt[0]['prop_id'].split('.')[0]
             if _id == "confirma_btn":
-                deleted_count = self.conn.delete_one("CD", item_id)
+                self.conn.delete_one("CD", item_id)
                 return  False, ""
             if _id == "cancela_btn":
                 return False, ""

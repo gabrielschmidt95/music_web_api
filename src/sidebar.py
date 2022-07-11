@@ -91,9 +91,17 @@ class Sidebar:
                                     ),
                                     width=12
                                 ),
+                                dbc.Col(
+                                    dbc.Button(
+                                        "INSERT",
+                                        color="secondary",
+                                        className="me-1",
+                                        id="insert_btn"
+                                    ), width=12
+                                ),
                             ],
                             className="g-2",
-                        )
+                        ),
                     ]
                 )
             ],
@@ -210,7 +218,7 @@ class Sidebar:
                     df = pd.read_excel(BytesIO(decoded))
                 else:
                     return dbc.Alert("FORMATO INVALIDO",
-                                     is_open=True,  duration=4000,color="danger")
+                                     is_open=True,  duration=4000, color="danger")
 
                 df = df.to_dict("records")
                 self.conn.drop("CD")

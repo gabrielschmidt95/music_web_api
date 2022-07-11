@@ -272,12 +272,13 @@ class Data_Modal:
         @app.callback(
             Output("df", "data"),
             Input("edit-btn", "n_clicks"),
+            Input("confirma_btn", "n_clicks"),
             State({'type': 'edit-data', 'index': ALL}, "value"),
             State({'type': 'edit-data', 'index': ALL}, "id"),
             State("edit_id", "data"),
             prevent_initial_call=True
         )
-        def replace_on(n_clicks, data, _id, item_id):
+        def replace_on(n_clicks,n_clicks2, data, _id, item_id):
             if n_clicks > 0:
                 edit = {}
                 for x, i in enumerate(_id):
@@ -299,7 +300,7 @@ class Data_Modal:
             cxt = callback_context.triggered
             _id = cxt[0]['prop_id'].split('.')[0]
             if _id == "confirma_btn":
-                self.conn.delete_one(item_id)
+                deleted_count = self.conn.delete_one("CD", item_id)
                 return  False, ""
             if _id == "cancela_btn":
                 return False, ""

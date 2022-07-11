@@ -210,9 +210,10 @@ class Sidebar:
                     df = pd.read_excel(BytesIO(decoded))
                 else:
                     return dbc.Alert("FORMATO INVALIDO",
-                                     is_open=True,  duration=4000)
+                                     is_open=True,  duration=4000,color="danger")
 
                 df = df.to_dict("records")
+                self.conn.drop("CD")
                 self.conn.insert_many("CD", df)
                 return dbc.Alert("SALVO",
                                  is_open=True,  duration=4000)

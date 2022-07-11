@@ -20,7 +20,7 @@ docker run --name mongodb -d -e MONGO_INITDB_ROOT_USERNAME=<user> -e MONGO_INITD
 ```
 
 ```
-docker run -d --name MYAPP -e MONGODB_CONNSTRING=mongodb+srv://username:password@clusterURL MYAPP:1.0
+docker run -d --name MYAPP -e MONGODB_CONNSTRING=mongodb+srv://<user>:<pass>@localhost MYAPP:1.0
 
 ```
 ## If run with local DB

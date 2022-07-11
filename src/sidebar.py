@@ -1,6 +1,10 @@
-from dash import html, dcc, Input, Output
+from dash import html, dcc, Input, Output, State
 import dash_bootstrap_components as dbc
+from itsdangerous import base64_decode
 from server import app
+import pandas as pd
+import base64
+from io import StringIO, BytesIO
 
 
 class Sidebar:
@@ -64,12 +68,26 @@ class Sidebar:
                         dbc.Row(
                             [
                                 dcc.Download(id="download_xlsx"),
+                                html.Div(id="download_alert"),
+                                #dbc.Alert(is_open=False,  duration=4000)
                                 dbc.Col(
                                     dbc.Button(
                                         "Donwload XLSX",
                                         color="success",
                                         className="me-1",
                                         id="download_xlsx_btn"
+                                    ),
+                                    width=12
+                                ),
+                                html.Div(id="upload_alert"),
+                                dbc.Col(
+                                    dcc.Upload(
+                                        dbc.Button(
+                                            "Upload XLSX",
+                                            color="info",
+                                            className="me-1",
+                                        ),
+                                        id="upload_xlsx"
                                     ),
                                     width=12
                                 ),
@@ -172,6 +190,32 @@ class Sidebar:
                 ],
                 className="g-2",
             )]
+
+        @app.callback(
+            Output("upload_alert", "children"),
+            Input('upload_xlsx', 'contents'),
+            State("upload_xlsx", "filename"),
+            prevent_initial_call=True,
+        )
+        def on_button_click(data, filename):
+            content_type, content_string = data.split(',')
+            decoded = base64.b64decode(content_string)
+            if filename is None:
+                raise ""
+            else:
+                if 'csv' in filename:
+                    df = pd.read_csv(
+                        StringIO(decoded.decode('utf-8')), sep=";")
+                elif 'xls' in filename:
+                    df = pd.read_excel(BytesIO(decoded))
+                else:
+                    return dbc.Alert("FORMATO INVALIDO",
+                                     is_open=True,  duration=4000)
+
+                df = df.to_dict("records")
+                self.conn.insert_many("CD", df)
+                return dbc.Alert("SALVO",
+                                 is_open=True,  duration=4000)
 
         @app.callback(
             Output("download_xlsx", "data"),

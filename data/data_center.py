@@ -31,7 +31,10 @@ class MongoDBConn(MongoClient):
         return self.conn[coll].insert_one(insert_data)
 
     def delete_one(self, coll, _id):
-        return self.conn[coll].delete_one({"_id": ObjectId(_id)}).deleted_count
+        deleted_count = self.conn[coll].delete_one({"_id": ObjectId(_id)}).deleted_count
+        if not deleted_count:
+            deleted_count = self.conn[coll].delete_one({"_id": _id}).deleted_count
+        return deleted_count
     
     def insert_many(self, coll, insert_data):
         return self.conn[coll].insert_many(insert_data)

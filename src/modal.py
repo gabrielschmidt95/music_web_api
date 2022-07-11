@@ -95,7 +95,7 @@ class Data_Modal:
 
                 title_edit = dbc.Row(
                     [
-                        dbc.Label("ARTIST", html_for="TITLE", width=6),
+                        dbc.Label("TITLE", html_for="TITLE", width=6),
                         dbc.Col(
                             dbc.Input(
                                 type="text",
@@ -117,10 +117,10 @@ class Data_Modal:
                                 options=[
                                     {'label': str(i), 'value': str(i)}
                                     for i in sorted(self.conn.qyery("CD")['MEDIA'].unique())],
-                                value=media["MEDIA"],
+                                value=media["MEDIA"] if "MEDIA" in media else None,
                                 optionHeight=40,
                                 clearable=False,
-                            ) if "MEDIA" in media else dbc.Input(
+                            ) if len(self.conn.qyery("CD")['MEDIA'].unique()) > 0 else dbc.Input(
                                 type="text",
                                 id={'type': 'edit-data', 'index': "MEDIA"},
                             ),

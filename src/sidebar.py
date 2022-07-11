@@ -69,23 +69,22 @@ class Sidebar:
                             [
                                 dcc.Download(id="download_xlsx"),
                                 html.Div(id="download_alert"),
-                                #dbc.Alert(is_open=False,  duration=4000)
+                                html.Div(id="upload_alert"),
                                 dbc.Col(
                                     dbc.Button(
-                                        "Donwload XLSX",
+                                        " Donwload XLSX",
                                         color="success",
-                                        className="me-1",
+                                        className="bi bi-download",
                                         id="download_xlsx_btn"
                                     ),
                                     width=12
                                 ),
-                                html.Div(id="upload_alert"),
                                 dbc.Col(
                                     dcc.Upload(
                                         dbc.Button(
-                                            "Upload XLSX",
+                                            " Upload XLSX",
                                             color="info",
-                                            className="me-1",
+                                            className="bi bi-upload",
                                         ),
                                         id="upload_xlsx"
                                     ),
@@ -93,9 +92,9 @@ class Sidebar:
                                 ),
                                 dbc.Col(
                                     dbc.Button(
-                                        "INSERT",
+                                        " Adicionar",
                                         color="secondary",
-                                        className="me-1",
+                                        className="bi bi-plus-circle",
                                         id="insert_btn"
                                     ), width=12
                                 ),
@@ -220,11 +219,27 @@ class Sidebar:
                     return dbc.Alert("FORMATO INVALIDO",
                                      is_open=True,  duration=4000, color="danger")
 
-                df = df.to_dict("records")
-                self.conn.drop("CD")
-                self.conn.insert_many("CD", df)
-                return dbc.Alert("SALVO",
+                COLUMNS = ('RELEASE_YEAR', 'ARTIST', 'TITLE', 'MEDIA', 'PURCHASE', 'ORIGIN',
+                'EDITION_YEAR', 'IFPI_MASTERING', 'IFPI_MOULD', 'BARCODE','MATRIZ', 'LOTE')
+                if len(df.columns) == len(COLUMNS):
+                    df = df.to_dict("records")
+                    self.conn.drop("CD")
+                    
+                    newList = []
+                    newDf = {}
+
+                    for d in df:
+                        for key,value in d.items():
+                            if key in COLUMNS:
+                                newDf[key] = value
+                        newList.append(newDf)
+
+                    self.conn.insert_many("CD", newList)
+                    return dbc.Alert("SALVO",
                                  is_open=True,  duration=4000)
+                else:
+                    return dbc.Alert(f"ERRO NO FORMATO Recebido: {len(df.columns)} Formato: {len(COLUMNS)}",
+                                 is_open=True,  duration=8000)
 
         @app.callback(
             Output("download_xlsx", "data"),
@@ -236,4 +251,5 @@ class Sidebar:
                 raise ""
             else:
                 df = self.conn.qyery("CD")
+                df.drop('_id', axis=1, inplace=True)
                 return dcc.send_data_frame(df.to_excel, "collection.xlsx")

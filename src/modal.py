@@ -282,21 +282,25 @@ class Data_Modal:
             Input("edit-btn", "n_clicks"),
             Input("confirma_btn", "n_clicks"),
             State({'type': 'edit-data', 'index': ALL}, "value"),
+            State({'type': 'edit-data', 'index': ALL}, "date"),
             State({'type': 'edit-data', 'index': ALL}, "id"),
             State("edit_id", "data"),
             prevent_initial_call=True
         )
-        def replace_on(n_clicks,n_clicks2, data, _id, item_id):
-            if n_clicks2 > 0:
-                return True
-            if n_clicks > 0:
+        def replace_on(n_clicks,n_clicks2, data,date, _id, item_id):
+            cxt = callback_context.triggered
+            prop_id = cxt[0]['prop_id'].split('.')[0]
+            if prop_id == 'edit-btn':
                 edit = {}
                 for x, i in enumerate(_id):
                     edit[i['index']] = data[x]
+                edit['PURCHASE'] = [x for x in date if x is not None][0]
                 if item_id is not None and item_id != '':
                     self.conn.replace_one("CD", item_id, edit)
                 else:
                     self.conn.insert_one("CD", edit)
+                return True
+            else:
                 return True
         
         @app.callback(

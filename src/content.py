@@ -1,11 +1,11 @@
 from dash import html, dcc, Input, Output, State, callback_context, ALL
 import dash_bootstrap_components as dbc
 import plotly.express as px
+from .config_screen import Config
 from server import app
 from json import loads
 from os import environ
 import requests
-
 
 class Content:
 
@@ -14,9 +14,9 @@ class Content:
 
     def discogs_get_url(self, row):
         pt_en = {
-            "alemanha":"germany",
-            "brasil":"brazil",
-            "france":"france"
+            "alemanha": "germany",
+            "brasil": "brazil",
+            "france": "france"
         }
         params = {
             "token": environ["DISCOGS_TOKEN"],
@@ -30,23 +30,48 @@ class Content:
             "https://api.discogs.com/database/search", params=params)
         result = resp.json()["results"]
         if len(result) > 0:
-            img = result[0]['thumb']
-            return dbc.Col([
-                html.Img(
-                    src=img
-                ),
-                dbc.Col([dbc.CardLink(
-                    f'DISCOGS - {x}',
-                    href=f"https://www.discogs.com{r['uri']}",
-                    className="bi bi-body-text",
-                    external_link=True,
-                    target="_blank"
-                ) for x, r in enumerate(result)]),
-                html.Div(f"ARTIGOS ENCONTRADOS: {len(result)}"),
-                dbc.Label("Lista de Faixas"),
-                dbc.ListGroup(
-                    self.get_discog_tacks(result[0]['master_id'])
-                )
+            img = result[0]['cover_image']
+            return dbc.Row([
+                dbc.Col([
+                   dbc.Row( html.Img(
+                        src=img
+                    ),justify="center")
+                ], width=4, align="center"),
+                dbc.Col([
+                    dbc.Accordion(
+                        [
+                            dbc.AccordionItem(
+                                [
+                                    dbc.ListGroup([
+                                        dbc.ListGroupItem(dbc.CardLink(
+                                            f'DISCOGS - {r["master_id"]}',
+                                            href=f"https://www.discogs.com{r['uri']}",
+                                            className="bi bi-body-text",
+                                            external_link=True,
+                                            target="_blank"
+                                        )) for r in result
+                                    ]),
+                                ],
+                                title=f"ARTIGOS ENCONTRADOS: {len(result)}",
+                            ),
+                        ],start_collapsed=True,
+                    ),
+                    dbc.Accordion(
+                        [
+                            dbc.AccordionItem(
+                                [
+                                    dbc.ListGroup(
+                                        self.get_discog_tacks(
+                                            result[0]['master_id'])
+                                    )
+                                ],
+                                title="Lista de Faixas",
+                            ),
+                        ],start_collapsed=True,
+                    ),
+
+                ], width=8)
+
             ])
         else:
             return html.Div("Nao encontrado no Discogs")
@@ -57,7 +82,7 @@ class Content:
             dbc.ListGroupItem(
                 f'{t["position"]} - {t["title"]}'
             ) for t in resp.json()["tracklist"]
-            ]
+        ]
 
     def layout(self):
         return html.Div([
@@ -90,6 +115,7 @@ class Content:
                             id='total_purchase_graph'
                         ), width=12
                     ), label="Ano de Aquisição"),
+                    dbc.Tab(Config(self.conn).layout(),label="Configuração")
                 ]
             )
         ], className='custom-content'
@@ -250,9 +276,7 @@ class Content:
                                 justify="end",
                             ),
                             html.Hr(),
-                            dbc.Row(
-                                self.discogs_get_url(row)
-                            ),
+                            self.discogs_get_url(row)
 
                         ], title=f'{row["RELEASE_YEAR"]} - {row["TITLE"]}')
                         for row in group.sort_values("RELEASE_YEAR").to_dict('records')], start_collapsed=True)

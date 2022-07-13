@@ -32,3 +32,11 @@
     margin-right: 2rem;
     padding: 2rem 1rem;
 }
+
+.list-group-item.active {
+    z-index: 2;
+    color: #0c63e4;
+    background-color:#e7f1ff;
+    border-color: #e7f1ff;
+    box-shadow: inset 0 -1px 0 rgb(0 0 0 / 13%);
+}

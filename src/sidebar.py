@@ -72,7 +72,7 @@ class Sidebar:
                                 html.Div(id="upload_alert"),
                                 dbc.Col(
                                     dbc.Button(
-                                        " Donwload XLSX",
+                                        " Download XLSX",
                                         color="success",
                                         className="bi bi-download",
                                         id="download_xlsx_btn"

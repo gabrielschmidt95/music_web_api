@@ -50,10 +50,19 @@ class Content:
         @app.callback(
             Output("total_year_graph", 'figure'),
             Output("total_purchase_graph", 'figure'),
-            Input('df', 'data')
+            Input('df', 'data'),
+            Input('filter_contents', 'data'),
         )
-        def render(value):
-            df = self.conn.qyery("CD")
+        def render(value, _filter):
+            if _filter:
+                _query = ""
+                for key, value in _filter.items():
+                    _query += f"{key} == '{value}' & "
+
+                _query = _query[:_query.rfind("&")]
+                df = self.conn.qyery("CD").query(_query)
+            else:
+                df = self.conn.qyery("CD")
             total_year = px.bar(df.groupby(['RELEASE_YEAR'])['RELEASE_YEAR'].count(),
                                 labels={
                 "index": "Ano",

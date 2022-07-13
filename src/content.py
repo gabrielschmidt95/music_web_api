@@ -2,9 +2,9 @@ from dash import html, dcc, Input, Output, State, callback_context, ALL
 import dash_bootstrap_components as dbc
 import plotly.express as px
 from server import app
-from json import loads, dumps
-import requests
+from json import loads
 from os import environ
+import requests
 
 
 class Content:
@@ -13,14 +13,18 @@ class Content:
         self.conn = conn
 
     def discogs_get_url(self, row):
-
+        pt_en = {
+            "alemanha":"germany",
+            "brasil":"brazil",
+            "france":"france"
+        }
         params = {
             "token": environ["DISCOGS_TOKEN"],
-            "query": row["ARTIST"],
-            "release_title": row["TITLE"],
+            "query": row["ARTIST"].lower(),
+            "release_title": row["TITLE"].lower(),
             "barcode": row["BARCODE"],
             "year": row["RELEASE_YEAR"],
-            "country": row["ORIGIN"]
+            "country": pt_en[row["ORIGIN"].lower()] if row["ORIGIN"].lower() in pt_en else row["ORIGIN"].lower()
         }
         resp = requests.get(
             "https://api.discogs.com/database/search", params=params)
@@ -31,13 +35,13 @@ class Content:
                 html.Img(
                     src=img
                 ),
-                dbc.CardLink(
-                    'DISCOGS',
-                    href=f"https://www.discogs.com{result[0]['uri']}",
+                dbc.Col([dbc.CardLink(
+                    f'DISCOGS - {x}',
+                    href=f"https://www.discogs.com{r['uri']}",
                     className="bi bi-body-text",
                     external_link=True,
                     target="_blank"
-                ),
+                ) for x, r in enumerate(result)]),
                 html.Div(f"ARTIGOS ENCONTRADOS: {len(result)}"),
                 dbc.Label("Tracks"),
                 dbc.ListGroup(
@@ -49,7 +53,11 @@ class Content:
 
     def get_discog_tacks(self, _id):
         resp = requests.get(f"https://api.discogs.com//masters/{_id}")
-        return [ dbc.ListGroupItem(t["title"]) for t in resp.json()["tracklist"] ]
+        return [
+            dbc.ListGroupItem(
+                f'{t["position"]} - {t["title"]}'
+            ) for t in resp.json()["tracklist"]
+            ]
 
     def layout(self):
         return html.Div([
@@ -218,10 +226,6 @@ class Content:
                                 ],
                                 align="start",
                             ),
-                            html.Hr(),
-                            dbc.Row(
-                                self.discogs_get_url(row)
-                            ),
                             dbc.Row(
                                 dbc.Col(
                                     [dbc.Button(
@@ -244,6 +248,10 @@ class Content:
                                         },
                                     )], width=2),
                                 justify="end",
+                            ),
+                            html.Hr(),
+                            dbc.Row(
+                                self.discogs_get_url(row)
                             ),
 
                         ], title=f'{row["RELEASE_YEAR"]} - {row["TITLE"]}')

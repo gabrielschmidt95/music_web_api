@@ -1,4 +1,4 @@
-from dash import dcc, Input, Output, State, callback_context, ALL
+from dash import dcc, Input, Output, State, callback_context, ALL, MATCH, html, no_update
 import dash_bootstrap_components as dbc
 from datetime import datetime, date
 from server import app
@@ -13,33 +13,33 @@ class Data_Modal:
     def layout(self):
         return dbc.Col([
             dbc.Modal(
-            [
-                dbc.ModalHeader(
-                    dbc.ModalTitle(id="modal_edit_title")),
-                dbc.ModalBody(id="modal_edit_body"),
-                dbc.ModalFooter(dbc.Button(
-                    "Salvar", id='edit-btn', className="ms-auto", n_clicks=0
-                )),
-            ],
-            is_open=False, id='modal_edit'
-        ),
-        dbc.Modal(
-            [
-                dbc.ModalHeader(
-                    dbc.ModalTitle("Deseja Apagar?")
-                ),
-                dbc.ModalBody(id="modal_delete_body"),
-                dbc.ModalFooter([
-                    dbc.Button(
-                    "Confirma", id='confirma_btn', className="ms-auto", n_clicks=0
+                [
+                    dbc.ModalHeader(
+                        dbc.ModalTitle(id="modal_edit_title")),
+                    dbc.ModalBody(id="modal_edit_body"),
+                    dbc.ModalFooter(dbc.Button(
+                        "Salvar", id='edit-btn', className="ms-auto", n_clicks=0
+                    )),
+                ],
+                is_open=False, id='modal_edit', size="lg"
+            ),
+            dbc.Modal(
+                [
+                    dbc.ModalHeader(
+                        dbc.ModalTitle("Deseja Apagar?")
                     ),
-                    dbc.Button(
-                    "Cancela", id='cancela_btn', className="ms-auto", n_clicks=0
-                    )
-                ]),
-            ],
-            is_open=False, id='modal_delete'
-        )
+                    dbc.ModalBody(id="modal_delete_body"),
+                    dbc.ModalFooter([
+                        dbc.Button(
+                            "Confirma", id='confirma_btn', className="ms-auto", n_clicks=0
+                        ),
+                        dbc.Button(
+                            "Cancela", id='cancela_btn', className="ms-auto", n_clicks=0
+                        )
+                    ]),
+                ],
+                is_open=False, id='modal_delete'
+            )
         ])
 
     def callbacks(self):
@@ -64,15 +64,28 @@ class Data_Modal:
                 release_year_edit = dbc.Row(
                     [
                         dbc.Label("RELEASE YEAR",
-                                  html_for="RELEASE_YEAR", width=6),
+                                  html_for="RELEASE_YEAR", width=2),
                         dbc.Col(
                             dbc.Input(
                                 type="number",
+                                min="1900",
                                 id={'type': 'edit-data',
                                     'index': "RELEASE_YEAR"},
                                 value=media["RELEASE_YEAR"] if "RELEASE_YEAR" in media else None,
                             ),
-                            width=6,
+                            width=4,
+                        ),
+                        dbc.Label("EDITION YEAR",
+                                  html_for="EDITION_YEAR", width=2),
+                        dbc.Col(
+                            dbc.Input(
+                                type="number",
+                                min="1900",
+                                id={'type': 'edit-data',
+                                    'index': "EDITION_YEAR"},
+                                value=media["EDITION_YEAR"] if "EDITION_YEAR" in media else None,
+                            ),
+                            width=3,
                         ),
                     ],
                     className="mb-3",
@@ -80,14 +93,25 @@ class Data_Modal:
 
                 artist_edit = dbc.Row(
                     [
-                        dbc.Label("ARTIST", html_for="ARTIST", width=6),
+                        dbc.Label("ARTIST", html_for="ARTIST", width=4),
                         dbc.Col(
-                            dbc.Input(
+                            dcc.Dropdown(
+                                id={'type': 'edit-data', 'index': "ARTIST"},
+                                options=[
+                                    {'label': str(i), 'value': str(i)}
+                                    for i in sorted(self.conn.qyery("CD")['ARTIST'].unique())],
+                                value=media["ARTIST"] if "ARTIST" in media else None,
+                                optionHeight=40,
+                                clearable=False,
+                            ) if len(self.conn.qyery("CD")['MEDIA'].unique()) > 0 else dbc.Input(
                                 type="text",
                                 id={'type': 'edit-data', 'index': "ARTIST"},
                                 value=media["ARTIST"] if "ARTIST" in media else None,
                             ),
-                            width=6,
+                            width=7, id={'type': 'add_media', 'index': "add_artist_col"}
+                        ),
+                        dbc.Col(
+                            dbc.Button(color="primary", className="bi bi-plus-circle", id={'type': 'add_media', 'index': "add_artist_btn"}), width=1
                         ),
                     ],
                     className="mb-3",
@@ -95,14 +119,15 @@ class Data_Modal:
 
                 title_edit = dbc.Row(
                     [
-                        dbc.Label("TITLE", html_for="TITLE", width=6),
+                        dbc.Label("TITLE", html_for="TITLE", width=4),
                         dbc.Col(
                             dbc.Input(
                                 type="text",
+                                minlength="3",
                                 id={'type': 'edit-data', 'index': "TITLE"},
                                 value=media["TITLE"] if "TITLE" in media else None,
                             ),
-                            width=6,
+                            width=7,
                         ),
                     ],
                     className="mb-3",
@@ -110,7 +135,7 @@ class Data_Modal:
 
                 media_edit = dbc.Row(
                     [
-                        dbc.Label("MEDIA", html_for="MEDIA", width=6),
+                        dbc.Label("MEDIA", html_for="MEDIA", width=4),
                         dbc.Col(
                             dcc.Dropdown(
                                 id={'type': 'edit-data', 'index': "MEDIA"},
@@ -124,7 +149,10 @@ class Data_Modal:
                                 type="text",
                                 id={'type': 'edit-data', 'index': "MEDIA"},
                             ),
-                            width=6,
+                            width=7, id={'type': 'add_media', 'index': "add_media_col"}
+                        ),
+                        dbc.Col(
+                            dbc.Button(color="primary", className="bi bi-plus-circle", id={'type': 'add_media', 'index': "add_media_btn"}), width=1
                         ),
                     ],
                     className="mb-3",
@@ -132,7 +160,7 @@ class Data_Modal:
 
                 purchase_edit = dbc.Row(
                     [
-                        dbc.Label("PURCHASE", html_for="PURCHASE", width=6),
+                        dbc.Label("PURCHASE", html_for="PURCHASE", width=2),
                         dbc.Col(
                             dcc.DatePickerSingle(
                                 id={'type': 'edit-data', 'index': 'PURCHASE'},
@@ -144,39 +172,16 @@ class Data_Modal:
                                 style={"border-radius": "0.5rem",
                                        "width": "100%"}
                             ),
-                            width=6,
+                            width=4,
                         ),
-                    ],
-                    className="mb-3",
-                )
-
-                origin_edit = dbc.Row(
-                    [
-                        dbc.Label("ORIGEM", html_for="ORIGIN", width=6),
+                        dbc.Label("ORIGEM", html_for="ORIGIN", width=2),
                         dbc.Col(
                             dbc.Input(
                                 type="text",
                                 id={'type': 'edit-data', 'index': "ORIGIN"},
                                 value=media["ORIGIN"] if "ORIGIN" in media else None,
                             ),
-                            width=6,
-                        ),
-                    ],
-                    className="mb-3",
-                )
-
-                edition_year_edit = dbc.Row(
-                    [
-                        dbc.Label("EDITION YEAR",
-                                  html_for="EDITION_YEAR", width=6),
-                        dbc.Col(
-                            dbc.Input(
-                                type="number",
-                                id={'type': 'edit-data',
-                                    'index': "EDITION_YEAR"},
-                                value=media["EDITION_YEAR"] if "EDITION_YEAR" in media else None,
-                            ),
-                            width=6,
+                            width=3,
                         ),
                     ],
                     className="mb-3",
@@ -185,7 +190,7 @@ class Data_Modal:
                 ifpi_mastering_edit = dbc.Row(
                     [
                         dbc.Label("IFPI MASTERING",
-                                  html_for="IFPI_MASTERING", width=6),
+                                  html_for="IFPI_MASTERING", width=4),
                         dbc.Col(
                             dbc.Input(
                                 type="text",
@@ -193,7 +198,7 @@ class Data_Modal:
                                     'index': "IFPI_MASTERING"},
                                 value=media["IFPI_MASTERING"] if "IFPI_MASTERING" in media else None,
                             ),
-                            width=6,
+                            width=7,
                         ),
                     ],
                     className="mb-3",
@@ -202,14 +207,14 @@ class Data_Modal:
                 ifpi_mould_edit = dbc.Row(
                     [
                         dbc.Label("IFPI MOULD",
-                                  html_for="IFPI_MOULD", width=6),
+                                  html_for="IFPI_MOULD", width=4),
                         dbc.Col(
                             dbc.Input(
                                 type="text",
                                 id={'type': 'edit-data', 'index': "IFPI_MOULD"},
                                 value=media["IFPI_MOULD"] if "IFPI_MOULD" in media else None,
                             ),
-                            width=6,
+                            width=7,
                         ),
                     ],
                     className="mb-3",
@@ -217,14 +222,14 @@ class Data_Modal:
 
                 barcode_edit = dbc.Row(
                     [
-                        dbc.Label("BARCODE", html_for="BARCODE", width=6),
+                        dbc.Label("BARCODE", html_for="BARCODE", width=4),
                         dbc.Col(
                             dbc.Input(
                                 type="text",
                                 id={'type': 'edit-data', 'index': "BARCODE"},
                                 value=media["BARCODE"] if "BARCODE" in media else None,
                             ),
-                            width=6,
+                            width=7,
                         ),
                     ],
                     className="mb-3",
@@ -232,14 +237,14 @@ class Data_Modal:
 
                 lote_edit = dbc.Row(
                     [
-                        dbc.Label("LOTE", html_for="LOTE", width=6),
+                        dbc.Label("LOTE", html_for="LOTE", width=4),
                         dbc.Col(
                             dbc.Input(
                                 type="text",
                                 id={'type': 'edit-data', 'index': "LOTE"},
                                 value=media["LOTE"] if "LOTE" in media else None,
                             ),
-                            width=6,
+                            width=7,
                         ),
                     ],
                     className="mb-3",
@@ -247,31 +252,30 @@ class Data_Modal:
 
                 matriz_edit = dbc.Row(
                     [
-                        dbc.Label("MATRIZ", html_for="MATRIZ", width=6),
+                        dbc.Label("MATRIZ", html_for="MATRIZ", width=4),
                         dbc.Col(
                             dbc.Textarea(
                                 id={'type': 'edit-data', 'index': "MATRIZ"},
                                 value=media["MATRIZ"] if "MATRIZ" in media else None,
                             ),
-                            width=6,
+                            width=7,
                         ),
                     ],
                     className="mb-3",
                 )
                 title = f"{media['ARTIST']} - {media['TITLE']}" if media != {} else "Nova Entrada"
                 body = dbc.Form([
-                    release_year_edit,
-                    artist_edit,
                     title_edit,
+                    artist_edit,
                     media_edit,
-                    purchase_edit,
-                    origin_edit,
-                    edition_year_edit,
                     ifpi_mastering_edit,
                     ifpi_mould_edit,
                     barcode_edit,
                     matriz_edit,
-                    lote_edit
+                    lote_edit,
+                    html.Hr(),
+                    release_year_edit,
+                    purchase_edit,
                 ])
                 return title, body, True, f"{media['_id']}" if "_id" in media else None
             else:
@@ -287,22 +291,35 @@ class Data_Modal:
             State("edit_id", "data"),
             prevent_initial_call=True
         )
-        def replace_on(n_clicks,n_clicks2, data,date, _id, item_id):
+        def replace_on(n_clicks, n_clicks2, data, date, _id, item_id):
             cxt = callback_context.triggered
             prop_id = cxt[0]['prop_id'].split('.')[0]
+            if prop_id == 'confirma_btn':
+                return True
             if prop_id == 'edit-btn':
                 edit = {}
                 for x, i in enumerate(_id):
                     edit[i['index']] = data[x]
-                edit['PURCHASE'] = [x for x in date if x is not None][0]
-                if item_id is not None and item_id != '':
-                    self.conn.replace_one("CD", item_id, edit)
+                try:
+                    edit['PURCHASE'] = [x for x in date if x is not None][0]
+                except:
+                    edit['PURCHASE'] = None
+                condition = [
+                    edit['ARTIST'] is not None,
+                    edit['TITLE'] is not None,
+                    edit['MEDIA'] is not None,
+                ]
+                if all(condition):
+                    if item_id is not None and item_id != '':
+                        self.conn.replace_one("CD", item_id, edit)
+                    else:
+                        self.conn.insert_one("CD", edit)
+                    return True
                 else:
-                    self.conn.insert_one("CD", edit)
-                return True
+                    return no_update
             else:
-                return True
-        
+                return no_update
+
         @app.callback(
             Output("modal_delete", "is_open"),
             Output("delete_id", "data"),
@@ -317,9 +334,35 @@ class Data_Modal:
             _id = cxt[0]['prop_id'].split('.')[0]
             if _id == "confirma_btn":
                 self.conn.delete_one("CD", item_id)
-                return  False, ""
+                return False, ""
             if _id == "cancela_btn":
                 return False, ""
             if cxt[0]['value']:
                 return True, loads(_id)["index"]
             return False, ""
+
+        @app.callback(
+            Output({'type': 'add_media', 'index': "add_media_col"}, 'children'),
+            Input({'type': 'add_media', 'index': "add_media_btn"}, 'n_clicks'),
+            prevent_initial_call=True
+        )
+        def update_options(n_clicks):
+            if n_clicks:
+                return dbc.Input(
+                    type="text",
+                    id={'type': 'edit-data', 'index': "MEDIA"},
+                    placeholder="Digite a Media"
+                )
+
+        @app.callback(
+            Output({'type': 'add_media', 'index': "add_artist_col"}, 'children'),
+            Input({'type': 'add_media', 'index': "add_artist_btn"}, 'n_clicks'),
+            prevent_initial_call=True
+        )
+        def update_options(n_clicks):
+            if n_clicks:
+                return dbc.Input(
+                    type="text",
+                    id={'type': 'edit-data', 'index': "ARTIST"},
+                    placeholder="Digite o Artista"
+                )

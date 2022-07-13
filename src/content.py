@@ -2,13 +2,54 @@ from dash import html, dcc, Input, Output, State, callback_context, ALL
 import dash_bootstrap_components as dbc
 import plotly.express as px
 from server import app
-from json import loads
+from json import loads, dumps
+import requests
+from os import environ
 
 
 class Content:
 
     def __init__(self, conn):
         self.conn = conn
+
+    def discogs_get_url(self, row):
+
+        params = {
+            "token": environ["DISCOGS_TOKEN"],
+            "query": row["ARTIST"],
+            "release_title": row["TITLE"],
+            "barcode": row["BARCODE"],
+            "year": row["RELEASE_YEAR"],
+            "country": row["ORIGIN"]
+        }
+        resp = requests.get(
+            "https://api.discogs.com/database/search", params=params)
+        result = resp.json()["results"]
+        if len(result) > 0:
+            img = result[0]['thumb']
+            return dbc.Col([
+                html.Img(
+                    src=img
+                ),
+                dbc.CardLink(
+                    'DISCOGS',
+                    href=f"https://www.discogs.com{result[0]['uri']}",
+                    className="bi bi-body-text",
+                    external_link=True,
+                    target="_blank"
+                ),
+                html.Div(f"ARTIGOS ENCONTRADOS: {len(result)}"),
+                dbc.Label("Tracks"),
+                dbc.ListGroup(
+                    self.get_discog_tacks(result[0]['master_id'])
+                )
+            ])
+        else:
+            return html.Div("Nao encontrado no Discogs")
+
+    def get_discog_tacks(self, _id):
+        resp = requests.get(f"https://api.discogs.com//masters/{_id}")
+        return [ dbc.ListGroupItem(t["title"]) for t in resp.json()["tracklist"] ]
 
     def layout(self):
         return html.Div([
@@ -99,7 +140,7 @@ class Content:
         def update_output(value, pagination, _, _filter):
             df = self.conn.qyery("CD")
             cxt = callback_context.triggered
-            _artist = df.groupby('ARTIST', as_index=False)     
+            _artist = df.groupby('ARTIST', as_index=False)
             if not any(value):
                 if cxt[0]['value'] == None:
                     try:
@@ -118,7 +159,7 @@ class Content:
                     dff = df.groupby('ARTIST', as_index=False)
             else:
                 dff = df
-                if cxt[0]['prop_id'].split('.')[0] not in ["pagination_contents","df"]:
+                if cxt[0]['prop_id'].split('.')[0] not in ["pagination_contents", "df"]:
                     _filter_index = loads(
                         cxt[0]['prop_id'].split('.')[0])["index"]
                     _filter[_filter_index] = cxt[0]["value"]
@@ -176,6 +217,10 @@ class Content:
                                         html.Div(f' LOTE: {row["LOTE"]}', className="bi bi-body-text"))
                                 ],
                                 align="start",
+                            ),
+                            html.Hr(),
+                            dbc.Row(
+                                self.discogs_get_url(row)
                             ),
                             dbc.Row(
                                 dbc.Col(

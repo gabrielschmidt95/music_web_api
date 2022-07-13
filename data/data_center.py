@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 from bson import ObjectId
 import pandas as pd
+import numpy as np
 
 
 class MongoDBConn(MongoClient):
@@ -20,6 +21,7 @@ class MongoDBConn(MongoClient):
                                        'MATRIZ', 'LOTE'])
         df["PURCHASE"] = df["PURCHASE"].astype('datetime64[ns]')
         df.replace({pd.NaT: None}, inplace=True)
+        df = df.replace({np.nan: None})
         return df
 
     def find_one(self, coll, id):

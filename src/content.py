@@ -43,7 +43,7 @@ class Content:
                     target="_blank"
                 ) for x, r in enumerate(result)]),
                 html.Div(f"ARTIGOS ENCONTRADOS: {len(result)}"),
-                dbc.Label("Tracks"),
+                dbc.Label("Lista de Faixas"),
                 dbc.ListGroup(
                     self.get_discog_tacks(result[0]['master_id'])
                 )
@@ -196,29 +196,29 @@ class Content:
                             dbc.Row(
                                 [
                                     dbc.Col(html.Div(
-                                        f' RELEASE YEAR: {row["RELEASE_YEAR"]}', className="bi bi-calendar-event")),
+                                        f' ANO DE LANÇAMENTO: {row["RELEASE_YEAR"]}', className="bi bi-calendar-event")),
                                     dbc.Col(
                                         html.Div(f' MEDIA: {row["MEDIA"]}', className="bi bi-vinyl")),
                                     dbc.Col(
-                                        html.Div(f' PURCHASE: {row["PURCHASE"].strftime("%d/%m/%Y")}', className="bi bi-cart3")),
+                                        html.Div(f' AQUISIÇÃO: {row["PURCHASE"].strftime("%d/%m/%Y")}', className="bi bi-cart3")),
                                 ],
                                 align="start",
                             ),
                             dbc.Row(
                                 [
                                     dbc.Col(
-                                        html.Div(f' ORIGIN: {row["ORIGIN"]}', className="bi bi-house")),
+                                        html.Div(f' ORIGEM: {row["ORIGIN"]}', className="bi bi-house")),
                                     dbc.Col(
-                                        html.Div(f' IFPI_MASTERING: {row["IFPI_MASTERING"]}', className="bi bi-body-text")),
+                                        html.Div(f' IFPI MASTERING: {row["IFPI_MASTERING"]}', className="bi bi-body-text")),
                                     dbc.Col(
-                                        html.Div(f' IFPI_MOULD: {row["IFPI_MOULD"]}', className="bi bi-body-text")),
+                                        html.Div(f' IFPI MOULD: {row["IFPI_MOULD"]}', className="bi bi-body-text")),
                                 ],
                                 align="start",
                             ),
                             dbc.Row(
                                 [
                                     dbc.Col(
-                                        html.Div(f' BARCODE: {row["BARCODE"]}', className="bi bi-body-text")),
+                                        html.Div(f' CÓDIGO DE BARRAS: {row["BARCODE"]}', className="bi bi-body-text")),
                                     dbc.Col(
                                         html.Div(f' MATRIZ: {row["MATRIZ"]}', className="bi bi-body-text")),
                                     dbc.Col(

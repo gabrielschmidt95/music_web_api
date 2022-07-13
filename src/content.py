@@ -1,3 +1,4 @@
+from itertools import count
 from dash import html, dcc, Input, Output, State, callback_context, ALL
 import dash_bootstrap_components as dbc
 import plotly.express as px
@@ -11,6 +12,7 @@ class Content:
 
     def __init__(self, conn):
         self.conn = conn
+        self.MAX_INDEX = 3
 
     def discogs_get_url(self, row):
         pt_en = {
@@ -18,13 +20,17 @@ class Content:
             "brasil": "brazil",
             "france": "france"
         }
+        if row["ORIGIN"] is not None:
+            country = pt_en[row["ORIGIN"].lower()] if row["ORIGIN"].lower() in pt_en else row["ORIGIN"].lower()
+        else:
+            country = ""
         params = {
             "token": environ["DISCOGS_TOKEN"],
             "query": row["ARTIST"].lower(),
             "release_title": row["TITLE"].lower(),
             "barcode": row["BARCODE"],
             "year": row["RELEASE_YEAR"],
-            "country": pt_en[row["ORIGIN"].lower()] if row["ORIGIN"].lower() in pt_en else row["ORIGIN"].lower()
+            "country": country
         }
         resp = requests.get(
             "https://api.discogs.com/database/search", params=params)
@@ -78,11 +84,14 @@ class Content:
 
     def get_discog_tacks(self, _id):
         resp = requests.get(f"https://api.discogs.com//masters/{_id}")
-        return [
-            dbc.ListGroupItem(
-                f'{t["position"]} - {t["title"]}'
-            ) for t in resp.json()["tracklist"]
-        ]
+        if resp.status_code == 200:
+            return [
+                dbc.ListGroupItem(
+                    f'{t["position"]} - {t["title"]}'
+                ) for t in resp.json()["tracklist"]
+            ]
+        else:
+            return html.Div(f"{resp.status_code}")
 
     def layout(self):
         return html.Div([
@@ -150,9 +159,13 @@ class Content:
             total_year.update_layout(showlegend=False, hovermode="x unified")
             total_year.update_traces(
                 hovertemplate='Total: %{y}<extra></extra>')
-
-            total_purchase = px.bar(df.groupby(df['PURCHASE'].dt.year)['PURCHASE'].count(),
-                                    labels={
+            try:
+                count = df.groupby(df['PURCHASE'].dt.year)['PURCHASE'].count()
+            except:
+                count = None
+            total_purchase = px.bar(
+                count,
+                labels={
                 "index": "Ano",
                 "value": "Total"
             },
@@ -183,10 +196,10 @@ class Content:
                         )
                     except:
                         pass
-                max_index = int(len(_artist.groups.keys())/10)
-                if max_index > 10:
+                max_index = int(len(_artist.groups.keys())/self.MAX_INDEX)
+                if max_index > self.MAX_INDEX:
                     artists = list(_artist.groups.keys())[
-                        (pagination*10)-10:pagination*10]
+                        (pagination*self.MAX_INDEX)-self.MAX_INDEX:pagination*self.MAX_INDEX]
                     dff = df.query(
                         f"ARTIST == @artists").groupby('ARTIST', as_index=False)
                 else:
@@ -207,10 +220,10 @@ class Content:
                 _artist = df.query(_query).groupby(
                     'ARTIST', as_index=False)
                 artists = list(_artist.groups.keys())[
-                    (pagination*10)-10:pagination*10]
+                    (pagination*self.MAX_INDEX)-self.MAX_INDEX:pagination*self.MAX_INDEX]
                 dff = df.query(
                     f"ARTIST == @artists").query(_query).groupby('ARTIST', as_index=False)
-                max_index = int(len(_artist.groups.keys())/10)
+                max_index = int(len(_artist.groups.keys())/self.MAX_INDEX)
             accord = dbc.Accordion([
                 dbc.AccordionItem([
                     dbc.Accordion([
@@ -226,7 +239,7 @@ class Content:
                                     dbc.Col(
                                         html.Div(f' MEDIA: {row["MEDIA"]}', className="bi bi-vinyl")),
                                     dbc.Col(
-                                        html.Div(f' AQUISIÇÃO: {row["PURCHASE"].strftime("%d/%m/%Y")}', className="bi bi-cart3")),
+                                        html.Div(f' AQUISIÇÃO: {row["PURCHASE"].strftime("%d/%m/%Y") if row["PURCHASE"] is not None else "" }', className="bi bi-cart3")),
                                 ],
                                 align="start",
                             ),

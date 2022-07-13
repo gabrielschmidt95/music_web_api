@@ -19,6 +19,7 @@ class MongoDBConn(MongoClient):
                                        'EDITION_YEAR', 'IFPI_MASTERING', 'IFPI_MOULD', 'BARCODE',
                                        'MATRIZ', 'LOTE'])
         df["PURCHASE"] = df["PURCHASE"].astype('datetime64[ns]')
+        df.replace({pd.NaT: None}, inplace=True)
         return df
 
     def find_one(self, coll, id):

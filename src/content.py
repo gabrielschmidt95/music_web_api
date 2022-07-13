@@ -26,10 +26,10 @@ class Content:
             country = ""
         params = {
             "token": environ["DISCOGS_TOKEN"],
-            "query": row["ARTIST"].lower(),
-            "release_title": row["TITLE"].lower(),
-            "barcode": row["BARCODE"],
-            "year": row["RELEASE_YEAR"],
+            "query": row["ARTIST"].lower() if not None else "",
+            "release_title": row["TITLE"].lower() if row["TITLE"].lower() is not None else "",
+            "barcode": row["BARCODE"] if row["BARCODE"] is not None else "",
+            "year": row["RELEASE_YEAR"] if not None else "",
             "country": country
         }
         resp = requests.get(
@@ -291,7 +291,7 @@ class Content:
                             html.Hr(),
                             self.discogs_get_url(row)
 
-                        ], title=f'{row["RELEASE_YEAR"]} - {row["TITLE"]}')
+                        ], title=f'{int(row["RELEASE_YEAR"]) if row["RELEASE_YEAR"] is not None else ""} - {row["TITLE"]}')
                         for row in group.sort_values("RELEASE_YEAR").to_dict('records')], start_collapsed=True)
                 ], title=name,
                 ) for name, group in dff], start_collapsed=True)

@@ -142,7 +142,7 @@ class Content:
                                     dbc.Col(
                                         html.Div(f' MEDIA: {row["MEDIA"]}', className="bi bi-vinyl")),
                                     dbc.Col(
-                                        html.Div(f' PURCHASE: {row["PURCHASE"]}', className="bi bi-cart3")),
+                                        html.Div(f' PURCHASE: {row["PURCHASE"].strftime("%d/%m/%Y")}', className="bi bi-cart3")),
                                 ],
                                 align="start",
                             ),

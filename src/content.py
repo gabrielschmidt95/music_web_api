@@ -15,22 +15,11 @@ class Content:
         self.MAX_INDEX = 3
 
     def discogs_get_url(self, row):
-        pt_en = {
-            "alemanha": "germany",
-            "brasil": "brazil",
-            "france": "france"
-        }
-        if row["ORIGIN"] is not None:
-            country = pt_en[row["ORIGIN"].lower()] if row["ORIGIN"].lower() in pt_en else row["ORIGIN"].lower()
-        else:
-            country = ""
         params = {
             "token": environ["DISCOGS_TOKEN"],
             "query": row["ARTIST"].lower() if not None else "",
             "release_title": row["TITLE"].lower() if row["TITLE"].lower() is not None else "",
-            "barcode": row["BARCODE"] if row["BARCODE"] is not None else "",
-            "year": row["RELEASE_YEAR"] if not None else "",
-            "country": country
+            "barcode": row["BARCODE"] if row["BARCODE"] is not None else ""
         }
         resp = requests.get(
             "https://api.discogs.com/database/search", params=params)

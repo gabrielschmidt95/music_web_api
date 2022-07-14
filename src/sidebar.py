@@ -1,6 +1,6 @@
 from dash import html, dcc, Input, Output, State
 import dash_bootstrap_components as dbc
-from itsdangerous import base64_decode
+import numpy as np
 from server import app
 import pandas as pd
 import base64
@@ -207,6 +207,7 @@ class Sidebar:
         def on_button_click(data, filename):
             content_type, content_string = data.split(',')
             decoded = base64.b64decode(content_string)
+    
             if filename is None:
                 raise ""
             else:
@@ -214,32 +215,35 @@ class Sidebar:
                     df = pd.read_csv(
                         StringIO(decoded.decode('utf-8')), sep=";")
                 elif 'xls' in filename:
-                    df = pd.read_excel(BytesIO(decoded))
+                    df = pd.read_excel(BytesIO(decoded),dtype={'BARCODE': str})
                 else:
                     return dbc.Alert("FORMATO INVALIDO",
                                      is_open=True,  duration=4000, color="danger")
 
                 COLUMNS = ('RELEASE_YEAR', 'ARTIST', 'TITLE', 'MEDIA', 'PURCHASE', 'ORIGIN',
-                'EDITION_YEAR', 'IFPI_MASTERING', 'IFPI_MOULD', 'BARCODE','MATRIZ', 'LOTE')
-                if len(df.columns) == len(COLUMNS):
-                    df = df.to_dict("records")
-                    self.conn.drop("CD")
-                    
-                    newList = []
+                           'EDITION_YEAR', 'IFPI_MASTERING', 'IFPI_MOULD', 'BARCODE', 'MATRIZ', 'LOTE')
+
+                for col in df.select_dtypes(include=['datetime64']).columns.tolist():
+                    df[col] = df[col].astype(str)
+                
+                df.replace({pd.NaT: None, np.nan: None, "NaT": None, "": None, "None": None}, inplace=True)
+
+                df = df.to_dict("records")
+
+                newList = []
+
+                for d in df:
                     newDf = {}
+                    for key, value in d.items():
+                        if key in COLUMNS:
+                            newDf[key] = value
+                    newList.append(newDf)
 
-                    for d in df:
-                        for key,value in d.items():
-                            if key in COLUMNS:
-                                newDf[key] = value
-                        newList.append(newDf)
+                self.conn.drop("CD")
+                self.conn.insert_many("CD", newList)
 
-                    self.conn.insert_many("CD", newList)
-                    return dbc.Alert("SALVO",
+                return dbc.Alert("SALVO",
                                  is_open=True,  duration=4000)
-                else:
-                    return dbc.Alert(f"ERRO NO FORMATO Recebido: {len(df.columns)} Formato: {len(COLUMNS)}",
-                                 is_open=True,  duration=8000)
 
         @app.callback(
             Output("download_xlsx", "data"),

@@ -15,6 +15,15 @@ class Content:
         self.MAX_INDEX = 3
 
     def discogs_get_url(self, row):
+        pt_en = {
+            "alemanha": "germany",
+            "brasil": "brazil",
+            "france": "france"
+        }
+        if row["ORIGIN"] is not None:
+            country = pt_en[row["ORIGIN"].lower()] if row["ORIGIN"].lower() in pt_en else row["ORIGIN"].lower()
+        else:
+            country = ""
         params = {
             "token": environ["DISCOGS_TOKEN"],
             "query": row["ARTIST"].lower() if not None else "",
@@ -23,6 +32,19 @@ class Content:
         }
         resp = requests.get(
             "https://api.discogs.com/database/search", params=params)
+        if len(result) > 1:
+            params = {
+            "token": environ["DISCOGS_TOKEN"],
+            "query": row["ARTIST"].lower() if not None else "",
+            "release_title": row["TITLE"].lower() if row["TITLE"].lower() is not None else "",
+            "barcode": row["BARCODE"] if row["BARCODE"] is not None else "",
+            "country": country
+            }
+            resp2 = requests.get(
+                "https://api.discogs.com/database/search", params=params)
+            if(resp2.json()["results"]) > 0 :
+                resp = resp2
+
         result = resp.json()["results"]
         if len(result) > 0:
             img = result[0]['cover_image']

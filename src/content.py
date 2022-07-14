@@ -6,6 +6,7 @@ from json import loads
 from os import environ
 import requests
 
+
 class Content:
 
     def __init__(self, conn):
@@ -18,7 +19,8 @@ class Content:
             "brasil": "brazil",
             "france": "france"
         }
-        country = pt_en[row["ORIGIN"].lower()] if row["ORIGIN"].lower() in pt_en else row["ORIGIN"].lower() if row["ORIGIN"] is not None else ""
+        country = pt_en[row["ORIGIN"].lower()] if row["ORIGIN"].lower(
+        ) in pt_en else row["ORIGIN"].lower() if row["ORIGIN"] is not None else ""
         params = {
             "token": environ["DISCOGS_TOKEN"],
             "query": row["ARTIST"].lower() if not None else "",
@@ -32,7 +34,7 @@ class Content:
                 params["country"] = country
                 resp2 = requests.get(
                     "https://api.discogs.com/database/search", params=params)
-                if(len(resp2.json()["results"])) > 0 :
+                if(len(resp2.json()["results"])) > 0:
                     resp = resp2
 
             result = resp.json()["results"]
@@ -40,9 +42,9 @@ class Content:
                 img = result[0]['cover_image']
                 return dbc.Row([
                     dbc.Col([
-                    dbc.Row( html.Img(
+                        dbc.Row(html.Img(
                             src=img
-                        ),justify="center")
+                        ), justify="center")
                     ], width=4, align="center"),
                     dbc.Col([
                         dbc.Accordion(
@@ -61,7 +63,7 @@ class Content:
                                     ],
                                     title=f"ARTIGOS ENCONTRADOS: {len(result)}",
                                 ),
-                            ],start_collapsed=True,
+                            ], start_collapsed=True,
                         ),
                         dbc.Accordion(
                             [
@@ -69,12 +71,12 @@ class Content:
                                     [
                                         dbc.ListGroup(
                                             self.get_discog_tacks(
-                                                result[0]['master_id'])
+                                                result[0]['id'])
                                         )
                                     ],
                                     title="Lista de Faixas",
                                 ),
-                            ],start_collapsed=True,
+                            ], start_collapsed=True,
                         ),
 
                     ], width=8)
@@ -86,7 +88,7 @@ class Content:
             return html.Div(f"Erro de Conexao com Discogs - {resp.status_code}")
 
     def get_discog_tacks(self, _id):
-        resp = requests.get(f"https://api.discogs.com//masters/{_id}")
+        resp = requests.get(f"https://api.discogs.com/releases/{_id}")
         if resp.status_code == 200:
             return [
                 dbc.ListGroupItem(
@@ -168,9 +170,9 @@ class Content:
             total_purchase = px.bar(
                 count,
                 labels={
-                "index": "Ano",
-                "value": "Total"
-            },
+                    "index": "Ano",
+                    "value": "Total"
+                },
                 title="Ano de Aquisição",
                 text_auto=True,
                 height=600
@@ -236,36 +238,59 @@ class Content:
                                     className="card-title bi bi-person"),
                             dbc.Row(
                                 [
-                                    dbc.Col(html.Div(
-                                        f' ANO DE LANÇAMENTO: {row["RELEASE_YEAR"] if row["RELEASE_YEAR"] is not None else ""}', className="bi bi-calendar-event")),
-                                    dbc.Col(html.Div(
-                                        f' ANO DA EDIÇÃO: {int(row["EDITION_YEAR"] if row["EDITION_YEAR"] is not None else "") if row["EDITION_YEAR"] is not None else ""}', className="bi bi-calendar-event")),
                                     dbc.Col(
-                                        html.Div(f' MEDIA: {row["MEDIA"] if row["MEDIA"] is not None else ""}', className="bi bi-vinyl")),
+                                        dbc.ListGroup(
+                                            [
+                                                dbc.ListGroupItem(
+                                                    f' ANO DE LANÇAMENTO: {row["RELEASE_YEAR"] if row["RELEASE_YEAR"] is not None else ""}',
+                                                    className="bi bi-calendar-event"
+                                                ),
+                                                dbc.ListGroupItem(
+                                                    f' ANO DA EDIÇÃO: {row["EDITION_YEAR"] if row["EDITION_YEAR"] is not None else ""}',
+                                                    className="bi bi-calendar-event"
+                                                ),
+                                                dbc.ListGroupItem(
+                                                    f' MEDIA: {row["MEDIA"] if row["MEDIA"] is not None else ""}', className="bi bi-vinyl"
+                                                ),
+                                                dbc.ListGroupItem(
+                                                    f' AQUISIÇÃO: {row["PURCHASE"].strftime("%d/%m/%Y") if row["PURCHASE"] is not None else "" }',
+                                                    className="bi bi-cart3"
+                                                )
+                                            ]
+                                        ), width=4),
+                                
                                     dbc.Col(
-                                        html.Div(f' AQUISIÇÃO: {row["PURCHASE"].strftime("%d/%m/%Y") if row["PURCHASE"] is not None else "" }', className="bi bi-cart3")),
-                                ],
-                                align="start",
-                            ),
-                            dbc.Row(
-                                [
+                                        dbc.ListGroup([
+                                            dbc.ListGroupItem(
+                                                f' ORIGEM: {row["ORIGIN"]  if row["ORIGIN"] is not None else "" }',
+                                                className="bi bi-house"
+                                            ),
+                                            dbc.ListGroupItem(
+                                                f' IFPI MASTERING: {row["IFPI_MASTERING"]  if row["IFPI_MASTERING"] is not None else "" }',
+                                                className="bi bi-body-text"
+                                            ),
+                                            dbc.ListGroupItem(
+                                                f' IFPI MOULD: {row["IFPI_MOULD"]  if row["IFPI_MOULD"] is not None else "" }',
+                                                className="bi bi-body-text"
+                                            )
+                                        ]), width=4),
+
                                     dbc.Col(
-                                        html.Div(f' ORIGEM: {row["ORIGIN"]  if row["ORIGIN"] is not None else "" }', className="bi bi-house")),
-                                    dbc.Col(
-                                        html.Div(f' IFPI MASTERING: {row["IFPI_MASTERING"]  if row["IFPI_MASTERING"] is not None else "" }', className="bi bi-body-text")),
-                                    dbc.Col(
-                                        html.Div(f' IFPI MOULD: {row["IFPI_MOULD"]  if row["IFPI_MOULD"] is not None else "" }', className="bi bi-body-text")),
-                                ],
-                                align="start",
-                            ),
-                            dbc.Row(
-                                [
-                                    dbc.Col(
-                                        html.Div(f' CÓDIGO DE BARRAS: {row["BARCODE"] if row["BARCODE"] is not None else "" }', className="bi bi-body-text")),
-                                    dbc.Col(
-                                        html.Div(f' MATRIZ: {row["MATRIZ"]  if row["MATRIZ"] is not None else "" }', className="bi bi-body-text")),
-                                    dbc.Col(
-                                        html.Div(f' LOTE: {row["LOTE"] if row["LOTE"] is not None else "" }', className="bi bi-body-text"))
+                                        dbc.ListGroup([
+                                            dbc.ListGroupItem(
+                                                f' CÓDIGO DE BARRAS: {row["BARCODE"] if row["BARCODE"] is not None else "" }',
+                                                className="bi bi-body-text"
+                                            ),
+                                            dbc.ListGroupItem(
+                                                f' MATRIZ: {row["MATRIZ"]  if row["MATRIZ"] is not None else "" }',
+                                                className="bi bi-body-text"
+                                            ),
+                                            dbc.ListGroupItem(
+                                                f' LOTE: {row["LOTE"] if row["LOTE"] is not None else "" }',
+                                                className="bi bi-body-text"
+                                            )
+                                        ]), width=4
+                                    )
                                 ],
                                 align="start",
                             ),
@@ -301,7 +326,7 @@ class Content:
                 ) for name, group in dff], start_collapsed=True)
             return accord, _filter, max_index
 
-        @app.callback(
+        @ app.callback(
             Output("pagination_contents", "data"),
             Input("pagination", "active_page"),
             prevent_initial_call=True

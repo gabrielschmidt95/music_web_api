@@ -221,7 +221,7 @@ class Sidebar:
                                      is_open=True,  duration=4000, color="danger")
 
                 COLUMNS = ('RELEASE_YEAR', 'ARTIST', 'TITLE', 'MEDIA', 'PURCHASE', 'ORIGIN',
-                           'EDITION_YEAR', 'IFPI_MASTERING', 'IFPI_MOULD', 'BARCODE', 'MATRIZ', 'LOTE')
+                           'EDITION_YEAR', 'IFPI_MASTERING', 'IFPI_MOULD', 'BARCODE', 'MATRIZ','LOTE','ANO_AQUISICAO','RECENTE','LISTA')
 
                 for col in df.select_dtypes(include=['datetime64']).columns.tolist():
                     df[col] = df[col].astype(str)

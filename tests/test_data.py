@@ -9,7 +9,7 @@ load_dotenv()
 
 COLUMNS = ("_id",'RELEASE_YEAR', 'ARTIST', 'TITLE', 'MEDIA', 'PURCHASE', 'ORIGIN',
        'EDITION_YEAR', 'IFPI_MASTERING', 'IFPI_MOULD', 'BARCODE',
-       'MATRIZ', 'LOTE')
+       'MATRIZ', 'LOTE','ANO_AQUISICAO','RECENTE','LISTA')
 
 def test_data() -> NoReturn:
     df = MongoDBConn(os.environ['CONNECTION_STRING'],

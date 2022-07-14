@@ -42,7 +42,7 @@ class Content:
             }
             resp2 = requests.get(
                 "https://api.discogs.com/database/search", params=params)
-            if(resp2.json()["results"]) > 0 :
+            if(len(resp2.json()["results"])) > 0 :
                 resp = resp2
 
         result = resp.json()["results"]

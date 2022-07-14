@@ -14,13 +14,6 @@ class Content:
         self.MAX_INDEX = 3
 
     def discogs_get_url(self, row):
-        pt_en = {
-            "alemanha": "germany",
-            "brasil": "brazil",
-            "france": "france"
-        }
-        country = pt_en[row["ORIGIN"].lower()] if row["ORIGIN"].lower(
-        ) in pt_en else row["ORIGIN"].lower() if row["ORIGIN"] is not None else ""
         params = {
             "token": environ["DISCOGS_TOKEN"],
             "query": row["ARTIST"].lower() if not None else "",
@@ -30,13 +23,6 @@ class Content:
         resp = requests.get(
             "https://api.discogs.com/database/search", params=params)
         if resp.status_code == 200:
-            if len(resp.json()["results"]) > 1:
-                params["country"] = country
-                resp2 = requests.get(
-                    "https://api.discogs.com/database/search", params=params)
-                if(len(resp2.json()["results"])) > 0:
-                    resp = resp2
-
             result = resp.json()["results"]
             if len(result) > 0:
                 img = result[0]['cover_image']
@@ -246,7 +232,7 @@ class Content:
                                                     className="bi bi-calendar-event"
                                                 ),
                                                 dbc.ListGroupItem(
-                                                    f' ANO DA EDIÇÃO: {row["EDITION_YEAR"] if row["EDITION_YEAR"] is not None else ""}',
+                                                    f' ANO DA EDIÇÃO: {int(row["EDITION_YEAR"]) if row["EDITION_YEAR"] is not None else ""}',
                                                     className="bi bi-calendar-event"
                                                 ),
                                                 dbc.ListGroupItem(

@@ -23,47 +23,7 @@ class Sidebar:
                     [
                         html.Div(id="drop"),
                         html.Hr(),
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    dbc.Card(
-                                        [
-                                            dbc.CardHeader("CD\'s"),
-                                            dbc.CardBody(
-                                                html.H5("", className="card-title", id="cds_total")),
-                                        ], color="success", outline=True
-                                    )
-                                ),
-                                dbc.Col(
-                                    dbc.Card(
-                                        [
-                                            dbc.CardHeader("LP\'s"),
-                                            dbc.CardBody(
-                                                html.H5("", className="card-title", id="lps_total")),
-                                        ], color="success", outline=True
-                                    )
-                                ),
-                                dbc.Col(
-                                    dbc.Card(
-                                        [
-                                            dbc.CardHeader("DVD\'s"),
-                                            dbc.CardBody(
-                                                html.H5("", className="card-title", id="dvds_total")),
-                                        ], color="success", outline=True
-                                    )
-                                ),
-                                dbc.Col(
-                                    dbc.Card(
-                                        [
-                                            dbc.CardHeader("BL\'s"),
-                                            dbc.CardBody(
-                                                html.H5("", className="card-title", id="bls_total")),
-                                        ], color="success", outline=True
-                                    )
-                                )
-                            ],
-                            className="g-2",
-                        ),
+                        html.Div(id="media_totals"),
                         html.Hr(),
                         dbc.Row(
                             [
@@ -109,21 +69,23 @@ class Sidebar:
 
     def callbacks(self):
         @app.callback(
-            Output("cds_total", 'children'),
-            Output("lps_total", 'children'),
-            Output("dvds_total", 'children'),
-            Output("bls_total", 'children'),
+            Output("media_totals", 'children'),
             Input('df', 'data')
         )
         def render(value):
             df = self.conn.qyery("CD")
-            cds = len(df.query("MEDIA=='CD'").index)
-            lps = len(df.query("MEDIA=='LP'").index)
-            dvds = len(df.query("MEDIA=='DVD'").index)
-            bls = len(df.query("MEDIA=='BL'").index)
-            return cds, lps, dvds, bls
 
-        @app.callback(
+            table_header = [
+                html.Thead(html.Tr([html.Th("MEDIA"), html.Th("QUANTIDADE")]))
+            ]
+            rows = [
+                    html.Tr([html.Td(i), html.Td(len(df.query(f"MEDIA=='{i}'").index))])
+                    for i in sorted(df['MEDIA'].unique())
+                ]
+            table_body = [html.Tbody(rows,className="g-2")]
+            return dbc.Table(table_header + table_body, bordered=True)
+
+        @ app.callback(
             Output("drop", 'children'),
             Input('filter_contents', 'data'),
             prevent_initial_call=True
@@ -198,7 +160,7 @@ class Sidebar:
                 className="g-2",
             )]
 
-        @app.callback(
+        @ app.callback(
             Output("upload_alert", "children"),
             Input('upload_xlsx', 'contents'),
             State("upload_xlsx", "filename"),
@@ -207,7 +169,7 @@ class Sidebar:
         def on_button_click(data, filename):
             content_type, content_string = data.split(',')
             decoded = base64.b64decode(content_string)
-    
+
             if filename is None:
                 raise ""
             else:
@@ -215,18 +177,20 @@ class Sidebar:
                     df = pd.read_csv(
                         StringIO(decoded.decode('utf-8')), sep=";")
                 elif 'xls' in filename:
-                    df = pd.read_excel(BytesIO(decoded),dtype={'BARCODE': str})
+                    df = pd.read_excel(
+                        BytesIO(decoded), dtype={'BARCODE': str})
                 else:
                     return dbc.Alert("FORMATO INVALIDO",
                                      is_open=True,  duration=4000, color="danger")
 
                 COLUMNS = ('RELEASE_YEAR', 'ARTIST', 'TITLE', 'MEDIA', 'PURCHASE', 'ORIGIN',
-                           'EDITION_YEAR', 'IFPI_MASTERING', 'IFPI_MOULD', 'BARCODE', 'MATRIZ','LOTE','ANO_AQUISICAO','RECENTE','LISTA')
+                           'EDITION_YEAR', 'IFPI_MASTERING', 'IFPI_MOULD', 'BARCODE', 'MATRIZ', 'LOTE', 'ANO_AQUISICAO', 'RECENTE', 'LISTA')
 
                 for col in df.select_dtypes(include=['datetime64']).columns.tolist():
                     df[col] = df[col].astype(str)
-                
-                df.replace({pd.NaT: None, np.nan: None, "NaT": None, "": None, "None": None}, inplace=True)
+
+                df.replace({pd.NaT: None, np.nan: None, "NaT": None,
+                           "": None, "None": None}, inplace=True)
 
                 df = df.to_dict("records")
 
@@ -245,7 +209,7 @@ class Sidebar:
                 return dbc.Alert("SALVO",
                                  is_open=True,  duration=4000)
 
-        @app.callback(
+        @ app.callback(
             Output("download_xlsx", "data"),
             Input("download_xlsx_btn", "n_clicks"),
             prevent_initial_call=True,

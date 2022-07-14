@@ -92,7 +92,6 @@ class Content:
                     dbc.Tab([
                         dcc.Loading([
                             html.Div(id='disco'),
-                            html.Hr(),
                             dbc.Row([
                                 dbc.Col(
                                     dbc.Pagination(
@@ -104,7 +103,7 @@ class Content:
                             )
                         ]
                         ),
-                    ], label="Lista"
+                    ], label="Principal"
                     ),
                     dbc.Tab(dbc.Col(
                         dcc.Graph(
@@ -177,9 +176,11 @@ class Content:
             Input({'type': 'filter-dropdown', 'index': ALL}, 'value'),
             Input('pagination_contents', 'data'),
             Input('df', 'data'),
+            Input('url', 'pathname'),
             State('filter_contents', 'data'),
-            prevent_initial_callback=True)
-        def update_output(value, pagination, _, _filter):
+            prevent_initial_call=True
+            )
+        def update_output(value, pagination, _,__, _filter):
             df = self.conn.qyery("CD")
             cxt = callback_context.triggered
             _artist = df.groupby('ARTIST', as_index=False)
@@ -191,14 +192,15 @@ class Content:
                         )
                     except:
                         pass
-                max_index = int(len(_artist.groups.keys())/self.MAX_INDEX)
-                if max_index > self.MAX_INDEX:
-                    artists = list(_artist.groups.keys())[
-                        (pagination*self.MAX_INDEX)-self.MAX_INDEX:pagination*self.MAX_INDEX]
-                    dff = df.query(
-                        f"ARTIST == @artists").groupby('ARTIST', as_index=False)
-                else:
-                    dff = df.groupby('ARTIST', as_index=False)
+                welcome = dbc.Alert(
+                        [
+                            html.H4("Bem Vindo!", className="alert-heading"),
+                            html.P(
+                                "Utilize a barra de navegação ao lado para realizar a pesquisa"
+                            ),
+                        ], style={"margin-top":"1rem"}
+                    )
+                return welcome, _filter, 0
             else:
                 dff = df
                 if cxt[0]['prop_id'].split('.')[0] not in ["pagination_contents", "df"]:

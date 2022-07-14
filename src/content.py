@@ -247,6 +247,8 @@ class Content:
                                 [
                                     dbc.Col(html.Div(
                                         f' ANO DE LANÇAMENTO: {row["RELEASE_YEAR"]}', className="bi bi-calendar-event")),
+                                    dbc.Col(html.Div(
+                                        f' ANO DA EDIÇÃO: {row["EDITION_YEAR"]}', className="bi bi-calendar-event")),
                                     dbc.Col(
                                         html.Div(f' MEDIA: {row["MEDIA"]}', className="bi bi-vinyl")),
                                     dbc.Col(

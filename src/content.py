@@ -4,6 +4,7 @@ import plotly.express as px
 from server import app
 from json import loads
 from os import environ
+import pandas as pd
 import requests
 
 
@@ -137,6 +138,9 @@ class Content:
                 df = self.conn.qyery("CD").query(_query)
             else:
                 df = self.conn.qyery("CD")
+
+            df['RELEASE_YEAR'] = pd.to_numeric(df['RELEASE_YEAR'], errors='coerce')    
+
             total_year = px.bar(df.groupby(['RELEASE_YEAR'])['RELEASE_YEAR'].count(),
                                 labels={
                 "index": "Ano",
@@ -150,6 +154,7 @@ class Content:
             total_year.update_traces(
                 hovertemplate='Total: %{y}<extra></extra>')
             try:
+                df['PURCHASE'] = pd.to_datetime(df['PURCHASE'], errors='coerce')
                 count = df.groupby(df['PURCHASE'].dt.year)['PURCHASE'].count()
             except:
                 count = None

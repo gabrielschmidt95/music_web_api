@@ -32,64 +32,66 @@ class Content:
         }
         resp = requests.get(
             "https://api.discogs.com/database/search", params=params)
-        if len(resp.json()["results"]) > 1:
-            params = {
-            "token": environ["DISCOGS_TOKEN"],
-            "query": row["ARTIST"].lower() if not None else "",
-            "release_title": row["TITLE"].lower() if row["TITLE"].lower() is not None else "",
-            "barcode": row["BARCODE"] if row["BARCODE"] is not None else "",
-            "country": country
-            }
-            resp2 = requests.get(
-                "https://api.discogs.com/database/search", params=params)
-            if(len(resp2.json()["results"])) > 0 :
-                resp = resp2
+        if resp.status_code == 200:
+            if "results" in resp.json():
+                if len(resp.json()["results"]) > 1:
+                    params = {
+                    "token": environ["DISCOGS_TOKEN"],
+                    "query": row["ARTIST"].lower() if not None else "",
+                    "release_title": row["TITLE"].lower() if row["TITLE"].lower() is not None else "",
+                    "barcode": row["BARCODE"] if row["BARCODE"] is not None else "",
+                    "country": country
+                    }
+                    resp2 = requests.get(
+                        "https://api.discogs.com/database/search", params=params)
+                    if(len(resp2.json()["results"])) > 0 :
+                        resp = resp2
 
-        result = resp.json()["results"]
-        if len(result) > 0:
-            img = result[0]['cover_image']
-            return dbc.Row([
-                dbc.Col([
-                   dbc.Row( html.Img(
-                        src=img
-                    ),justify="center")
-                ], width=4, align="center"),
-                dbc.Col([
-                    dbc.Accordion(
-                        [
-                            dbc.AccordionItem(
-                                [
-                                    dbc.ListGroup([
-                                        dbc.ListGroupItem(dbc.CardLink(
-                                            f'DISCOGS - {r["master_id"]}',
-                                            href=f"https://www.discogs.com{r['uri']}",
-                                            className="bi bi-body-text",
-                                            external_link=True,
-                                            target="_blank"
-                                        )) for r in result
-                                    ]),
-                                ],
-                                title=f"ARTIGOS ENCONTRADOS: {len(result)}",
-                            ),
-                        ],start_collapsed=True,
-                    ),
-                    dbc.Accordion(
-                        [
-                            dbc.AccordionItem(
-                                [
-                                    dbc.ListGroup(
-                                        self.get_discog_tacks(
-                                            result[0]['master_id'])
-                                    )
-                                ],
-                                title="Lista de Faixas",
-                            ),
-                        ],start_collapsed=True,
-                    ),
+            result = resp.json()["results"]
+            if len(result) > 0:
+                img = result[0]['cover_image']
+                return dbc.Row([
+                    dbc.Col([
+                    dbc.Row( html.Img(
+                            src=img
+                        ),justify="center")
+                    ], width=4, align="center"),
+                    dbc.Col([
+                        dbc.Accordion(
+                            [
+                                dbc.AccordionItem(
+                                    [
+                                        dbc.ListGroup([
+                                            dbc.ListGroupItem(dbc.CardLink(
+                                                f'DISCOGS - {r["master_id"]}',
+                                                href=f"https://www.discogs.com{r['uri']}",
+                                                className="bi bi-body-text",
+                                                external_link=True,
+                                                target="_blank"
+                                            )) for r in result
+                                        ]),
+                                    ],
+                                    title=f"ARTIGOS ENCONTRADOS: {len(result)}",
+                                ),
+                            ],start_collapsed=True,
+                        ),
+                        dbc.Accordion(
+                            [
+                                dbc.AccordionItem(
+                                    [
+                                        dbc.ListGroup(
+                                            self.get_discog_tacks(
+                                                result[0]['master_id'])
+                                        )
+                                    ],
+                                    title="Lista de Faixas",
+                                ),
+                            ],start_collapsed=True,
+                        ),
 
-                ], width=8)
+                    ], width=8)
 
-            ])
+                ])
         else:
             return html.Div("Nao encontrado no Discogs")
 

@@ -1,6 +1,6 @@
 from dash import html, dcc, Input, Output, State
 import dash_bootstrap_components as dbc
-from itsdangerous import base64_decode
+import numpy as np
 from server import app
 import pandas as pd
 import base64
@@ -220,26 +220,30 @@ class Sidebar:
                                      is_open=True,  duration=4000, color="danger")
 
                 COLUMNS = ('RELEASE_YEAR', 'ARTIST', 'TITLE', 'MEDIA', 'PURCHASE', 'ORIGIN',
-                'EDITION_YEAR', 'IFPI_MASTERING', 'IFPI_MOULD', 'BARCODE','MATRIZ', 'LOTE')
-                if len(df.columns) == len(COLUMNS):
-                    df = df.to_dict("records")
-                    self.conn.drop("CD")
-                    
-                    newList = []
+                           'EDITION_YEAR', 'IFPI_MASTERING', 'IFPI_MOULD', 'BARCODE', 'MATRIZ', 'LOTE')
+
+                for col in df.select_dtypes(include=['datetime64']).columns.tolist():
+                    df[col] = df[col].astype(str)
+                
+                df = df.replace({np.nan: None})
+                df = df.replace({"NaT": None})
+                df = df.to_dict("records")
+
+                newList = []
+
+                for d in df:
                     newDf = {}
+                    for key, value in d.items():
+                        if key in COLUMNS:
+                            newDf[key] = value
+                    newList.append(newDf)
 
-                    for d in df:
-                        for key,value in d.items():
-                            if key in COLUMNS:
-                                newDf[key] = value
-                        newList.append(newDf)
+                self.conn.drop("CD")
+                print(newList)
+                self.conn.insert_many("CD", newList)
 
-                    self.conn.insert_many("CD", newList)
-                    return dbc.Alert("SALVO",
+                return dbc.Alert("SALVO",
                                  is_open=True,  duration=4000)
-                else:
-                    return dbc.Alert(f"ERRO NO FORMATO Recebido: {len(df.columns)} Formato: {len(COLUMNS)}",
-                                 is_open=True,  duration=8000)
 
         @app.callback(
             Output("download_xlsx", "data"),

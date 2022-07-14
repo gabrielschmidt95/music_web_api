@@ -1,7 +1,6 @@
 from dash import html, dcc, Input, Output, State, callback_context, ALL
 import dash_bootstrap_components as dbc
 import plotly.express as px
-from .config_screen import Config
 from server import app
 from json import loads
 from os import environ
@@ -127,8 +126,7 @@ class Content:
                         dcc.Graph(
                             id='total_purchase_graph'
                         ), width=12
-                    ), label="Ano de Aquisição"),
-                    dbc.Tab(Config(self.conn).layout(),label="Configuração")
+                    ), label="Ano de Aquisição")
                 ]
             )
         ], className='custom-content'

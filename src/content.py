@@ -19,7 +19,7 @@ class Content:
             "token": environ["DISCOGS_TOKEN"],
             "query": row["ARTIST"].lower() if not None else "",
             "release_title": row["TITLE"].lower() if row["TITLE"].lower() is not None else "",
-            "barcode": str(row["BARCODE"]) if row["BARCODE"] is not None else ""
+            "barcode": str(row["BARCODE"]) if row["BARCODE"] is not None and row["BARCODE"] != 'None' else ""
         }
         resp = requests.get(
             "https://api.discogs.com/database/search", params=params)

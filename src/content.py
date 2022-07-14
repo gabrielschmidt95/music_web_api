@@ -32,7 +32,7 @@ class Content:
         }
         resp = requests.get(
             "https://api.discogs.com/database/search", params=params)
-        if len(result) > 1:
+        if len(resp.json()["results"]) > 1:
             params = {
             "token": environ["DISCOGS_TOKEN"],
             "query": row["ARTIST"].lower() if not None else "",
@@ -247,6 +247,8 @@ class Content:
                                 [
                                     dbc.Col(html.Div(
                                         f' ANO DE LANÇAMENTO: {row["RELEASE_YEAR"]}', className="bi bi-calendar-event")),
+                                    dbc.Col(html.Div(
+                                        f' ANO DA EDIÇÃO: {int(row["EDITION_YEAR"]) if row["EDITION_YEAR"] is not None else ""}', className="bi bi-calendar-event")),
                                     dbc.Col(
                                         html.Div(f' MEDIA: {row["MEDIA"]}', className="bi bi-vinyl")),
                                     dbc.Col(

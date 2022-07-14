@@ -1,4 +1,3 @@
-from itertools import count
 from dash import html, dcc, Input, Output, State, callback_context, ALL
 import dash_bootstrap_components as dbc
 import plotly.express as px
@@ -20,32 +19,22 @@ class Content:
             "brasil": "brazil",
             "france": "france"
         }
-        if row["ORIGIN"] is not None:
-            country = pt_en[row["ORIGIN"].lower()] if row["ORIGIN"].lower() in pt_en else row["ORIGIN"].lower()
-        else:
-            country = ""
+        country = pt_en[row["ORIGIN"].lower()] if row["ORIGIN"].lower() in pt_en else row["ORIGIN"].lower() if row["ORIGIN"] is not None else ""
         params = {
             "token": environ["DISCOGS_TOKEN"],
             "query": row["ARTIST"].lower() if not None else "",
             "release_title": row["TITLE"].lower() if row["TITLE"].lower() is not None else "",
-            "barcode": row["BARCODE"] if row["BARCODE"] is not None else ""
+            "barcode": str(row["BARCODE"]) if row["BARCODE"] is not None else ""
         }
         resp = requests.get(
             "https://api.discogs.com/database/search", params=params)
         if resp.status_code == 200:
-            if "results" in resp.json():
-                if len(resp.json()["results"]) > 1:
-                    params = {
-                    "token": environ["DISCOGS_TOKEN"],
-                    "query": row["ARTIST"].lower() if not None else "",
-                    "release_title": row["TITLE"].lower() if row["TITLE"].lower() is not None else "",
-                    "barcode": row["BARCODE"] if row["BARCODE"] is not None else "",
-                    "country": country
-                    }
-                    resp2 = requests.get(
-                        "https://api.discogs.com/database/search", params=params)
-                    if(len(resp2.json()["results"])) > 0 :
-                        resp = resp2
+            if len(resp.json()["results"]) > 1:
+                params["country"] = country
+                resp2 = requests.get(
+                    "https://api.discogs.com/database/search", params=params)
+                if(len(resp2.json()["results"])) > 0 :
+                    resp = resp2
 
             result = resp.json()["results"]
             if len(result) > 0:
@@ -92,8 +81,10 @@ class Content:
                     ], width=8)
 
                 ])
+            else:
+                return html.Div("Nao encontrado no Discogs")
         else:
-            return html.Div("Nao encontrado no Discogs")
+            return html.Div(f"Erro de Conexao com Discogs - {resp.status_code}")
 
     def get_discog_tacks(self, _id):
         resp = requests.get(f"https://api.discogs.com//masters/{_id}")
@@ -248,11 +239,11 @@ class Content:
                             dbc.Row(
                                 [
                                     dbc.Col(html.Div(
-                                        f' ANO DE LANÇAMENTO: {row["RELEASE_YEAR"]}', className="bi bi-calendar-event")),
+                                        f' ANO DE LANÇAMENTO: {row["RELEASE_YEAR"] if row["RELEASE_YEAR"] is not None else ""}', className="bi bi-calendar-event")),
                                     dbc.Col(html.Div(
-                                        f' ANO DA EDIÇÃO: {int(row["EDITION_YEAR"]) if row["EDITION_YEAR"] is not None else ""}', className="bi bi-calendar-event")),
+                                        f' ANO DA EDIÇÃO: {int(row["EDITION_YEAR"] if row["EDITION_YEAR"] is not None else "") if row["EDITION_YEAR"] is not None else ""}', className="bi bi-calendar-event")),
                                     dbc.Col(
-                                        html.Div(f' MEDIA: {row["MEDIA"]}', className="bi bi-vinyl")),
+                                        html.Div(f' MEDIA: {row["MEDIA"] if row["MEDIA"] is not None else ""}', className="bi bi-vinyl")),
                                     dbc.Col(
                                         html.Div(f' AQUISIÇÃO: {row["PURCHASE"].strftime("%d/%m/%Y") if row["PURCHASE"] is not None else "" }', className="bi bi-cart3")),
                                 ],
@@ -261,22 +252,22 @@ class Content:
                             dbc.Row(
                                 [
                                     dbc.Col(
-                                        html.Div(f' ORIGEM: {row["ORIGIN"]}', className="bi bi-house")),
+                                        html.Div(f' ORIGEM: {row["ORIGIN"]  if row["ORIGIN"] is not None else "" }', className="bi bi-house")),
                                     dbc.Col(
-                                        html.Div(f' IFPI MASTERING: {row["IFPI_MASTERING"]}', className="bi bi-body-text")),
+                                        html.Div(f' IFPI MASTERING: {row["IFPI_MASTERING"]  if row["IFPI_MASTERING"] is not None else "" }', className="bi bi-body-text")),
                                     dbc.Col(
-                                        html.Div(f' IFPI MOULD: {row["IFPI_MOULD"]}', className="bi bi-body-text")),
+                                        html.Div(f' IFPI MOULD: {row["IFPI_MOULD"]  if row["IFPI_MOULD"] is not None else "" }', className="bi bi-body-text")),
                                 ],
                                 align="start",
                             ),
                             dbc.Row(
                                 [
                                     dbc.Col(
-                                        html.Div(f' CÓDIGO DE BARRAS: {row["BARCODE"]}', className="bi bi-body-text")),
+                                        html.Div(f' CÓDIGO DE BARRAS: {row["BARCODE"] if row["BARCODE"] is not None else "" }', className="bi bi-body-text")),
                                     dbc.Col(
-                                        html.Div(f' MATRIZ: {row["MATRIZ"]}', className="bi bi-body-text")),
+                                        html.Div(f' MATRIZ: {row["MATRIZ"]  if row["MATRIZ"] is not None else "" }', className="bi bi-body-text")),
                                     dbc.Col(
-                                        html.Div(f' LOTE: {row["LOTE"]}', className="bi bi-body-text"))
+                                        html.Div(f' LOTE: {row["LOTE"] if row["LOTE"] is not None else "" }', className="bi bi-body-text"))
                                 ],
                                 align="start",
                             ),

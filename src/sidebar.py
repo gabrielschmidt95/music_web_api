@@ -207,6 +207,7 @@ class Sidebar:
         def on_button_click(data, filename):
             content_type, content_string = data.split(',')
             decoded = base64.b64decode(content_string)
+    
             if filename is None:
                 raise ""
             else:
@@ -214,7 +215,7 @@ class Sidebar:
                     df = pd.read_csv(
                         StringIO(decoded.decode('utf-8')), sep=";")
                 elif 'xls' in filename:
-                    df = pd.read_excel(BytesIO(decoded))
+                    df = pd.read_excel(BytesIO(decoded),dtype={'BARCODE': str})
                 else:
                     return dbc.Alert("FORMATO INVALIDO",
                                      is_open=True,  duration=4000, color="danger")
@@ -225,8 +226,8 @@ class Sidebar:
                 for col in df.select_dtypes(include=['datetime64']).columns.tolist():
                     df[col] = df[col].astype(str)
                 
-                df = df.replace({np.nan: None})
-                df = df.replace({"NaT": None})
+                df.replace({pd.NaT: None, np.nan: None, "NaT": None, "": None, "None": None}, inplace=True)
+
                 df = df.to_dict("records")
 
                 newList = []
@@ -239,7 +240,6 @@ class Sidebar:
                     newList.append(newDf)
 
                 self.conn.drop("CD")
-                print(newList)
                 self.conn.insert_many("CD", newList)
 
                 return dbc.Alert("SALVO",

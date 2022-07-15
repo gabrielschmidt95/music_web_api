@@ -91,29 +91,20 @@ class Content:
                 [
                     dbc.Tab([
                         dcc.Loading([
-                            html.Div(id='disco'),
-                            dbc.Row([
-                                dbc.Col(
-                                    dbc.Pagination(
-                                        id="pagination",
-                                        max_value=1,
-                                        fully_expanded=False), width=3
-                                )],
-                                justify="center"
-                            )
+                            html.Div(id='disco')
                         ]
                         ),
                     ], label="Principal"
                     ),
                     dbc.Tab(dbc.Col(
-                        dcc.Graph(
+                       dcc.Loading( dcc.Graph(
                             id='total_year_graph'
-                        ), width=12
+                        )), width=12
                     ), label="Ano de Lançamento"),
                     dbc.Tab(dbc.Col(
-                        dcc.Graph(
+                        dcc.Loading(dcc.Graph(
                             id='total_purchase_graph'
-                        ), width=12
+                        )), width=12
                     ), label="Ano de Aquisição")
                 ]
             )
@@ -127,7 +118,7 @@ class Content:
             Input('df', 'data'),
             Input('filter_contents', 'data'),
         )
-        def render(value, _filter):
+        def render(_, _filter):
             if _filter:
                 _query = ""
                 for key, value in _filter.items():
@@ -172,18 +163,15 @@ class Content:
         @app.callback(
             Output('disco', 'children'),
             Output('filter_contents', 'data'),
-            Output('pagination', 'max_value'),
             Input({'type': 'filter-dropdown', 'index': ALL}, 'value'),
-            Input('pagination_contents', 'data'),
             Input('df', 'data'),
             Input('url', 'pathname'),
             State('filter_contents', 'data'),
             prevent_initial_call=True
             )
-        def update_output(value, pagination, _,__, _filter):
+        def update_output(value, _,url, _filter):
             df = self.conn.qyery("CD")
             cxt = callback_context.triggered
-            _artist = df.groupby('ARTIST', as_index=False)
             if not any(value):
                 if cxt[0]['value'] == None:
                     try:
@@ -200,10 +188,9 @@ class Content:
                             ),
                         ], style={"margin-top":"1rem"}
                     )
-                return welcome, _filter, 0
+                return welcome, _filter
             else:
-                dff = df
-                if cxt[0]['prop_id'].split('.')[0] not in ["pagination_contents", "df"]:
+                if cxt[0]['prop_id'].split('.')[0] not in ["df"]:
                     _filter_index = loads(
                         cxt[0]['prop_id'].split('.')[0])["index"]
                     _filter[_filter_index] = cxt[0]["value"]
@@ -214,13 +201,8 @@ class Content:
                     _query += f"{key} == '{value}' & "
 
                 _query = _query[:_query.rfind("&")]
-                _artist = df.query(_query).groupby(
-                    'ARTIST', as_index=False)
-                artists = list(_artist.groups.keys())[
-                    (pagination*self.MAX_INDEX)-self.MAX_INDEX:pagination*self.MAX_INDEX]
-                dff = df.query(
-                    f"ARTIST == @artists").query(_query).groupby('ARTIST', as_index=False)
-                max_index = int(len(_artist.groups.keys())/self.MAX_INDEX)
+
+                df = df.query(_query).groupby('ARTIST', as_index=False)
             accord = dbc.Accordion([
                 dbc.AccordionItem([
                     dbc.Accordion([
@@ -316,14 +298,5 @@ class Content:
                         ], title=f'{int(row["RELEASE_YEAR"]) if row["RELEASE_YEAR"] is not None else ""} - {row["TITLE"]}')
                         for row in group.sort_values("RELEASE_YEAR").to_dict('records')], start_collapsed=True)
                 ], title=name,
-                ) for name, group in dff], start_collapsed=True)
-            return accord, _filter, max_index
-
-        @ app.callback(
-            Output("pagination_contents", "data"),
-            Input("pagination", "active_page"),
-            prevent_initial_call=True
-        )
-        def change_page(page):
-            if page:
-                return page
+                ) for name, group in df], start_collapsed=True)
+            return accord, _filter

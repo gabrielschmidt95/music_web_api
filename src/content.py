@@ -98,12 +98,12 @@ class Content:
                     ),
                     dbc.Tab(dbc.Col(
                        dcc.Loading( dcc.Graph(
-                            id='total_year_graph'
+                            id='total_year_graph',responsive=True
                         )), width=12
                     ), label="Ano de Lançamento"),
                     dbc.Tab(dbc.Col(
                         dcc.Loading(dcc.Graph(
-                            id='total_purchase_graph'
+                            id='total_purchase_graph',responsive=True
                         )), width=12
                     ), label="Ano de Aquisição")
                 ]

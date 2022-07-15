@@ -220,4 +220,6 @@ class Sidebar:
             else:
                 df = self.conn.qyery("CD")
                 df.drop('_id', axis=1, inplace=True)
+                df.replace({pd.NaT: None, np.nan: None, "NaT": None,
+                           "": None, "None": None}, inplace=True)
                 return dcc.send_data_frame(df.to_excel, "collection.xlsx")

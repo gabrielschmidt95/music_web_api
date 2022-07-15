@@ -13,18 +13,23 @@ class Content:
     def __init__(self, conn):
         self.conn = conn
         self.MAX_INDEX = 3
+        self.discogs_url = "https://api.discogs.com/database/search"
 
     def discogs_get_url(self, row):
         params = {
             "token": environ["DISCOGS_TOKEN"],
             "query": row["ARTIST"].lower() if not None else "",
             "release_title": row["TITLE"].lower() if row["TITLE"].lower() is not None else "",
-            "barcode": str(row["BARCODE"]) if row["BARCODE"] is not None and row["BARCODE"] != 'None' else ""
+            "barcode": str(row["BARCODE"]) if row["BARCODE"] is not None and row["BARCODE"] != 'None' else "",
+            "country": row["ORIGIN"].lower() if not None else ""
         }
-        resp = requests.get(
-            "https://api.discogs.com/database/search", params=params)
+        resp = requests.get(self.discogs_url, params=params)
         if resp.status_code == 200:
             result = resp.json()["results"]
+            if len(result) == 0:
+                params.pop("country")
+                resp = requests.get(self.discogs_url, params=params)
+
             if len(result) > 0:
                 img = result[0]['cover_image']
                 return dbc.Row([
@@ -98,12 +103,12 @@ class Content:
                     ),
                     dbc.Tab(dbc.Col(
                        dcc.Loading( dcc.Graph(
-                            id='total_year_graph'
+                            id='total_year_graph',responsive=True
                         )), width=12
                     ), label="Ano de Lançamento"),
                     dbc.Tab(dbc.Col(
                         dcc.Loading(dcc.Graph(
-                            id='total_purchase_graph'
+                            id='total_purchase_graph',responsive=True
                         )), width=12
                     ), label="Ano de Aquisição")
                 ]
@@ -202,6 +207,16 @@ class Content:
 
                 _query = _query[:_query.rfind("&")]
 
+                if len( df.query(_query)) > 30:
+                    warning = dbc.Alert(
+                        [
+                            html.H4("Acima de 30 unidades encontradas", className="alert-heading"),
+                            html.P(
+                                "Utilize o filtro de forma mais granular ou Realize o download da Planilha"
+                            ),
+                        ], style={"margin-top":"1rem"}
+                    )
+                    return warning, _filter
                 df = df.query(_query).groupby('ARTIST', as_index=False)
             accord = dbc.Accordion([
                 dbc.AccordionItem([

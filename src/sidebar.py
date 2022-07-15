@@ -5,6 +5,7 @@ from server import app
 import pandas as pd
 import base64
 from io import StringIO, BytesIO
+import pandera as pa
 
 
 class Sidebar:
@@ -79,10 +80,11 @@ class Sidebar:
                 html.Thead(html.Tr([html.Th("MEDIA"), html.Th("QUANTIDADE")]))
             ]
             rows = [
-                    html.Tr([html.Td(i), html.Td(len(df.query(f"MEDIA=='{i}'").index))])
-                    for i in sorted(df['MEDIA'].unique())
-                ]
-            table_body = [html.Tbody(rows,className="g-2")]
+                html.Tr([html.Td(i), html.Td(
+                    len(df.query(f"MEDIA=='{i}'").index))])
+                for i in sorted(df['MEDIA'].unique())
+            ]
+            table_body = [html.Tbody(rows, className="g-2")]
             return dbc.Table(table_header + table_body, bordered=True)
 
         @ app.callback(
@@ -189,25 +191,46 @@ class Sidebar:
                 for col in df.select_dtypes(include=['datetime64']).columns.tolist():
                     df[col] = df[col].astype(str)
 
-                df.replace({pd.NaT: None, np.nan: None, "NaT": None,
-                           "": None, "None": None}, inplace=True)
+                validate_schema = pa.DataFrameSchema({
+                    "RELEASE_YEAR": pa.Column(int),
+                    "ARTIST": pa.Column(str),
+                    "TITLE": pa.Column(str),
+                    "MEDIA": pa.Column(str),
+                    "PURCHASE": pa.Column(object, nullable=True),
+                    "ORIGIN": pa.Column(str, nullable=True),
+                    "EDITION_YEAR": pa.Column(float, nullable=True),
+                    "IFPI_MASTERING": pa.Column(str, nullable=True),
+                    "IFPI_MOULD": pa.Column(str, nullable=True),
+                    "MATRIZ": pa.Column(str, nullable=True),
+                    "LOTE": pa.Column(str, nullable=True)
+                })
 
-                df = df.to_dict("records")
+                try:
+                    validate_schema(df)
+                    df.replace({pd.NaT: None, np.nan: None, "NaT": None,
+                                "": None, "None": None}, inplace=True)
+                    df = df.to_dict("records")
 
-                newList = []
+                    newList = []
 
-                for d in df:
-                    newDf = {}
-                    for key, value in d.items():
-                        if key in COLUMNS:
-                            newDf[key] = value
-                    newList.append(newDf)
+                    for d in df:
+                        newDf = {}
+                        for key, value in d.items():
+                            if key in COLUMNS:
+                                newDf[key] = value
+                        newList.append(newDf)
 
-                self.conn.drop("CD")
-                self.conn.insert_many("CD", newList)
+                    self.conn.drop("CD")
+                    self.conn.insert_many("CD", newList)
 
-                return dbc.Alert("SALVO",
-                                 is_open=True,  duration=4000)
+                    return dbc.Alert("SALVO",
+                                     is_open=True,  duration=4000)
+                except pa.errors.SchemaError as error:
+                    return dbc.Alert([
+                            html.P(f"ERRO NOS DADOS DA COLUNA: {error.schema.name}"),
+                            html.P(f"TIPO ESPERADO: {error.check}")
+                        ],is_open=True,color="danger"
+                    )
 
         @ app.callback(
             Output("download_xlsx", "data"),

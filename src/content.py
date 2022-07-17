@@ -18,17 +18,25 @@ class Content:
     def discogs_get_url(self, row):
         params = {
             "token": environ["DISCOGS_TOKEN"],
-            "query": row["ARTIST"].lower() if not None else "",
+            "artist": row["ARTIST"].lower() if not None else "",
             "release_title": row["TITLE"].lower() if row["TITLE"].lower() is not None else "",
             "barcode": str(row["BARCODE"]) if row["BARCODE"] is not None and row["BARCODE"] != 'None' else "",
-            "country": row["ORIGIN"].lower() if not None else ""
+            "country": row["ORIGIN"].lower() if not None and row["ORIGIN"].lower() != 'none' else "",
+            "year": str(row["RELEASE_YEAR"]) if not None else "",
+            "format": "album"
         }
         resp = requests.get(self.discogs_url, params=params)
         if resp.status_code == 200:
             result = resp.json()["results"]
             if len(result) == 0:
                 params.pop("country")
+                params.pop("format")
                 resp = requests.get(self.discogs_url, params=params)
+                result = resp.json()["results"]
+                if len(result) == 0:
+                    params.pop("year")
+                    resp = requests.get(self.discogs_url, params=params)
+                    result = resp.json()["results"]
 
             if len(result) > 0:
                 img = result[0]['cover_image']
@@ -45,7 +53,7 @@ class Content:
                                     [
                                         dbc.ListGroup([
                                             dbc.ListGroupItem(dbc.CardLink(
-                                                f'DISCOGS - {r["master_id"]}',
+                                                f'DISCOGS - {r["id"]}',
                                                 href=f"https://www.discogs.com{r['uri']}",
                                                 className="bi bi-body-text",
                                                 external_link=True,
@@ -63,7 +71,7 @@ class Content:
                                     [
                                         dbc.ListGroup(
                                             self.get_discog_tacks(
-                                                result[0]['id'])
+                                                result[0]['id'],result[0]['type'])
                                         )
                                     ],
                                     title="Lista de Faixas",
@@ -79,8 +87,8 @@ class Content:
         else:
             return html.Div(f"Erro de Conexao com Discogs - {resp.status_code}")
 
-    def get_discog_tacks(self, _id):
-        resp = requests.get(f"https://api.discogs.com/releases/{_id}")
+    def get_discog_tacks(self, _id, _type):
+        resp = requests.get(f"https://api.discogs.com/{_type}s/{_id}")
         if resp.status_code == 200:
             return [
                 dbc.ListGroupItem(

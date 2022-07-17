@@ -18,17 +18,25 @@ class Content:
     def discogs_get_url(self, row):
         params = {
             "token": environ["DISCOGS_TOKEN"],
-            "query": row["ARTIST"].lower() if not None else "",
+            "artist": row["ARTIST"].lower() if not None else "",
             "release_title": row["TITLE"].lower() if row["TITLE"].lower() is not None else "",
             "barcode": str(row["BARCODE"]) if row["BARCODE"] is not None and row["BARCODE"] != 'None' else "",
-            "country": row["ORIGIN"].lower() if not None else ""
+            "country": row["ORIGIN"].lower() if not None and row["ORIGIN"].lower() != 'none' else "",
+            "year": str(row["RELEASE_YEAR"]) if not None else "",
+            "format": "album"
         }
         resp = requests.get(self.discogs_url, params=params)
         if resp.status_code == 200:
             result = resp.json()["results"]
             if len(result) == 0:
                 params.pop("country")
+                params.pop("format")
                 resp = requests.get(self.discogs_url, params=params)
+                result = resp.json()["results"]
+                if len(result) == 0:
+                    params.pop("year")
+                    resp = requests.get(self.discogs_url, params=params)
+                    result = resp.json()["results"]
 
             if len(result) > 0:
                 img = result[0]['cover_image']
@@ -45,7 +53,7 @@ class Content:
                                     [
                                         dbc.ListGroup([
                                             dbc.ListGroupItem(dbc.CardLink(
-                                                f'DISCOGS - {r["master_id"]}',
+                                                f'DISCOGS - {r["id"]}',
                                                 href=f"https://www.discogs.com{r['uri']}",
                                                 className="bi bi-body-text",
                                                 external_link=True,
@@ -63,7 +71,7 @@ class Content:
                                     [
                                         dbc.ListGroup(
                                             self.get_discog_tacks(
-                                                result[0]['id'])
+                                                result[0]['id'],result[0]['type'])
                                         )
                                     ],
                                     title="Lista de Faixas",
@@ -79,8 +87,8 @@ class Content:
         else:
             return html.Div(f"Erro de Conexao com Discogs - {resp.status_code}")
 
-    def get_discog_tacks(self, _id):
-        resp = requests.get(f"https://api.discogs.com/releases/{_id}")
+    def get_discog_tacks(self, _id, _type):
+        resp = requests.get(f"https://api.discogs.com/{_type}s/{_id}")
         if resp.status_code == 200:
             return [
                 dbc.ListGroupItem(
@@ -101,15 +109,28 @@ class Content:
                         ),
                     ], label="Principal"
                     ),
-                    dbc.Tab(dbc.Col(
-                       dcc.Loading( dcc.Graph(
-                            id='total_year_graph',responsive=True
-                        )), width=12
-                    ), label="Ano de Lançamento"),
-                    dbc.Tab(dbc.Col(
-                        dcc.Loading(dcc.Graph(
-                            id='total_purchase_graph',responsive=True
-                        )), width=12
+                    dbc.Tab(
+                        dbc.Col([
+                            dcc.Loading(
+                                dcc.Graph(
+                                    id='total_year_graph',
+                                    responsive=True
+                                )
+                            ),
+                            html.Div(id="total_year_data")
+                        ], width=12),
+                        label="Ano de Lançamento"
+                    ),
+                    dbc.Tab(
+                        dbc.Col([
+                            dcc.Loading(
+                                dcc.Graph(
+                                    id='total_purchase_graph',
+                                    responsive=True
+                                )
+                            ),
+                            html.Div(id="total_purchase_data")
+                        ], width=12
                     ), label="Ano de Aquisição")
                 ]
             )
@@ -134,7 +155,8 @@ class Content:
             else:
                 df = self.conn.qyery("CD")
 
-            df['RELEASE_YEAR'] = pd.to_numeric(df['RELEASE_YEAR'], errors='coerce')    
+            df['RELEASE_YEAR'] = pd.to_numeric(
+                df['RELEASE_YEAR'], errors='coerce')
 
             total_year = px.bar(df.groupby(['RELEASE_YEAR'])['RELEASE_YEAR'].count(),
                                 labels={
@@ -145,11 +167,13 @@ class Content:
                 text_auto=True,
                 height=600
             )
-            total_year.update_layout(showlegend=False, hovermode="x unified")
+            total_year.update_layout(
+                showlegend=False, hovermode="x unified", clickmode='event+select')
             total_year.update_traces(
                 hovertemplate='Total: %{y}<extra></extra>')
             try:
-                df['PURCHASE'] = pd.to_datetime(df['PURCHASE'], errors='coerce')
+                df['PURCHASE'] = pd.to_datetime(
+                    df['PURCHASE'], errors='coerce')
                 count = df.groupby(df['PURCHASE'].dt.year)['PURCHASE'].count()
             except:
                 count = None
@@ -162,8 +186,53 @@ class Content:
                 title="Ano de Aquisição",
                 text_auto=True,
                 height=600
-            ).update_layout(showlegend=False)
+            ).update_layout(showlegend=False, clickmode='event+select')
             return total_year, total_purchase
+
+        @app.callback(
+            Output('total_purchase_data', 'children'),
+            Input("total_purchase_graph", 'clickData')
+        )
+        def display_click_data(clickData):
+            if clickData:
+                df = self.conn.qyery("CD")
+                df['PURCHASE'] = pd.to_datetime(df['PURCHASE'], errors='coerce')
+                df = df[df['PURCHASE'].dt.year == clickData['points'][0]['x']]
+                table_header = [
+                    html.Thead(html.Tr([html.Th("ARTIST"), html.Th("TITLE")]))
+                ]
+                table_body = [
+                    html.Tbody([
+                        html.Tr([
+                            html.Td(row["ARTIST"]),
+                            html.Td(row["TITLE"])
+                        ]) for row in df.to_dict('records')
+                    ])
+                ]
+                table = dbc.Table(table_header + table_body, bordered=True)
+                return table
+
+        @app.callback(
+            Output('total_year_data', 'children'),
+            Input("total_year_graph", 'clickData')
+        )
+        def display_click_data(clickData):
+            if clickData:
+                df = self.conn.qyery("CD")
+                df = df[df['RELEASE_YEAR'] == clickData['points'][0]['x']]
+                table_header = [
+                    html.Thead(html.Tr([html.Th("ARTIST"), html.Th("TITLE")]))
+                ]
+                table_body = [
+                    html.Tbody([
+                        html.Tr([
+                            html.Td(row["ARTIST"]),
+                            html.Td(row["TITLE"])
+                        ]) for row in df.to_dict('records')
+                    ])
+                ]
+                table = dbc.Table(table_header + table_body, bordered=True)
+                return table
 
         @app.callback(
             Output('disco', 'children'),
@@ -173,8 +242,8 @@ class Content:
             Input('url', 'pathname'),
             State('filter_contents', 'data'),
             prevent_initial_call=True
-            )
-        def update_output(value, _,url, _filter):
+        )
+        def update_output(value, _, url, _filter):
             df = self.conn.qyery("CD")
             cxt = callback_context.triggered
             if not any(value):
@@ -186,13 +255,13 @@ class Content:
                     except:
                         pass
                 welcome = dbc.Alert(
-                        [
-                            html.H4("Bem Vindo!", className="alert-heading"),
-                            html.P(
-                                "Utilize a barra de navegação ao lado para realizar a pesquisa"
-                            ),
-                        ], style={"margin-top":"1rem"}
-                    )
+                    [
+                        html.H4("Bem Vindo!", className="alert-heading"),
+                        html.P(
+                            "Utilize a barra de navegação ao lado para realizar a pesquisa"
+                        ),
+                    ], style={"margin-top": "1rem"}
+                )
                 return welcome, _filter
             else:
                 if cxt[0]['prop_id'].split('.')[0] not in ["df"]:
@@ -207,14 +276,15 @@ class Content:
 
                 _query = _query[:_query.rfind("&")]
 
-                if len( df.query(_query)) > 30:
+                if len(df.query(_query)) > 30:
                     warning = dbc.Alert(
                         [
-                            html.H4("Acima de 30 unidades encontradas", className="alert-heading"),
+                            html.H4("Acima de 30 unidades encontradas",
+                                    className="alert-heading"),
                             html.P(
                                 "Utilize o filtro de forma mais granular ou Realize o download da Planilha"
                             ),
-                        ], style={"margin-top":"1rem"}
+                        ], style={"margin-top": "1rem"}
                     )
                     return warning, _filter
                 df = df.query(_query).groupby('ARTIST', as_index=False)
@@ -248,7 +318,7 @@ class Content:
                                                 )
                                             ]
                                         ), width=4),
-                                
+
                                     dbc.Col(
                                         dbc.ListGroup([
                                             dbc.ListGroupItem(

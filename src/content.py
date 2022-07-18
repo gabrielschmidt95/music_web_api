@@ -262,7 +262,7 @@ class Content:
                     [
                         html.H4("Bem Vindo!", className="alert-heading"),
                         html.P(
-                            "Utilize a barra de navegação ao lado para realizar a pesquisa"
+                            "Utilize os filtros para realizar a pesquisa"
                         ),
                     ], style={"margin-top": "1rem"}
                 )

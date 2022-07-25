@@ -48,12 +48,15 @@ class Data_Modal:
             Output("modal_edit_body", "children"),
             Output("modal_edit", "is_open"),
             Output("edit_id", "data"),
+            Input("edit-btn", "n_clicks"),
             Input("insert_btn", "n_clicks"),
             Input({'type': 'edit_button', 'index': ALL}, 'n_clicks'),
             prevent_initial_call=True
         )
-        def fill_edit_modal(insert_btn, value):
+        def fill_edit_modal(edit_btn,insert_btn, value):
             cxt = callback_context.triggered
+            if cxt[0]['prop_id'] == 'edit-btn.n_clicks':
+                return "", "", False, None
             if cxt[0]['value']:
                 try:
                     _id = loads(cxt[0]['prop_id'].split('.')[0])["index"]

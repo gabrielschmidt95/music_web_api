@@ -18,87 +18,88 @@ class Content:
         self.discogs_url = "https://api.discogs.com/database/search"
 
     def discogs_get_url(self, row):
-        params = {
-            "token": environ["DISCOGS_TOKEN"],
-            "artist": row["ARTIST"].lower() if not None else "",
-            "release_title": row["TITLE"].lower() if row["TITLE"].lower() is not None else "",
-            "barcode": str(row["BARCODE"]) if row["BARCODE"] is not None and row["BARCODE"] != 'None' else "",
-            "country": row["ORIGIN"].lower() if not None and row["ORIGIN"].lower() != 'none' else "",
-            "year": str(row["RELEASE_YEAR"]) if not None else "",
-            "format": "album"
-        }
-        resp = requests.get(self.discogs_url, params=params)
-        if resp.status_code == 200:
-            result = resp.json()["results"]
-            if len(result) == 0:
-                params.pop("country")
-                params.pop("format")
-                resp = requests.get(self.discogs_url, params=params)
+        if "DISCOGS" not in row or row["DISCOGS"] is None:
+            params = {
+                "token": environ["DISCOGS_TOKEN"],
+                "artist": row["ARTIST"].lower() if not None else "",
+                "release_title": row["TITLE"].lower() if row["TITLE"].lower() is not None else "",
+                "barcode": str(row["BARCODE"]) if row["BARCODE"] is not None and row["BARCODE"] != 'None' else "",
+                "country": row["ORIGIN"].lower() if not None and row["ORIGIN"].lower() != 'none' else "",
+                "year": str(row["RELEASE_YEAR"]) if not None else "",
+                "format": "album"
+            }
+            resp = requests.get(self.discogs_url, params=params)
+            if resp.status_code == 200:
                 result = resp.json()["results"]
                 if len(result) == 0:
-                    params.pop("year")
+                    params.pop("country")
+                    params.pop("format")
                     resp = requests.get(self.discogs_url, params=params)
                     result = resp.json()["results"]
+                    if len(result) == 0:
+                        params.pop("year")
+                        resp = requests.get(self.discogs_url, params=params)
+                        result = resp.json()["results"]
 
-            if len(result) > 0:
-                img = result[0]['cover_image']
-                return dbc.Row([
-                    dbc.Col([
-                        dbc.Row(html.Img(
-                            src=img
-                        ), justify="center")
-                    ], width=4, align="center"),
-                    dbc.Col([
-                        dbc.Accordion(
-                            [
-                                dbc.AccordionItem(
-                                    [
-                                        dbc.ListGroup([
-                                            dbc.ListGroupItem(dbc.CardLink(
-                                                f'DISCOGS - {r["id"]}',
-                                                href=f"https://www.discogs.com{r['uri']}",
-                                                className="bi bi-body-text",
-                                                external_link=True,
-                                                target="_blank"
-                                            )) for r in result
-                                        ]),
-                                    ],
-                                    title=f"ARTIGOS ENCONTRADOS: {len(result)}",
-                                ),
-                            ], start_collapsed=True,
-                        ),
-                        dbc.Accordion(
-                            [
-                                dbc.AccordionItem(
-                                    [
-                                        dbc.ListGroup(
-                                            self.get_discog_tacks(
-                                                result[0]['id'],result[0]['type'])
-                                        )
-                                    ],
-                                    title="Lista de Faixas",
-                                ),
-                            ], start_collapsed=True,
-                        ),
-
-                    ], width=8)
-
-                ])
+                if len(result) > 0:
+                    row["DISCOGS"] = result[0]
+                    row["DISCOGS"]["urls"] = [{"id": r['id'],"uri": r['uri']} for r in result]
+                    row["DISCOGS"]["len"] = len(result)
+                    _id = row["DISCOGS"]['id']
+                    _type = row["DISCOGS"]['type']
+                    row["DISCOGS"]["tracks"] = requests.get(
+                        f"https://api.discogs.com/{_type}s/{_id}").json()["tracklist"]
+                    self.conn.replace_one("CD", row["_id"], row)
+                else:
+                    return html.Div("Nao encontrado no Discogs")
             else:
-                return html.Div("Nao encontrado no Discogs")
-        else:
-            return html.Div(f"Erro de Conexao com Discogs - {resp.status_code}")
+                return html.Div(f"Error:{resp.status_code}")
 
-    def get_discog_tacks(self, _id, _type):
-        resp = requests.get(f"https://api.discogs.com/{_type}s/{_id}")
-        if resp.status_code == 200:
-            return [
-                dbc.ListGroupItem(
-                    f'{t["position"]} - {t["title"]}'
-                ) for t in resp.json()["tracklist"]
-            ]
-        else:
-            return html.Div(f"{resp.status_code}")
+        return dbc.Row([
+            dbc.Col([
+                dbc.Row(html.Img(
+                    src=row["DISCOGS"]['cover_image']
+                ), justify="center")
+            ], width=4, align="center"),
+            dbc.Col([
+                dbc.Accordion(
+                    [
+                        dbc.AccordionItem(
+                            [
+                                dbc.ListGroup([
+                                    dbc.ListGroupItem(dbc.CardLink(
+                                        f'DISCOGS - {url["id"]}',
+                                        href=f"https://www.discogs.com{url['uri']}",
+                                        className="bi bi-body-text",
+                                        external_link=True,
+                                        target="_blank"
+                                    )) for url in row["DISCOGS"]["urls"]
+                                ]),
+                            ],
+                            title=f"ARTIGOS ENCONTRADOS: {row['DISCOGS']['len']}",
+                        ),
+                    ], start_collapsed=True,
+                ),
+                dbc.Accordion(
+                    [
+                        dbc.AccordionItem(
+                            [
+                                dbc.ListGroup(
+                                    [
+                                        dbc.ListGroupItem(
+                                            f'{t["position"]} - {t["title"]}'
+                                        ) for t in row["DISCOGS"]["tracks"]
+                                    ]
+                                )
+                            ],
+                            title="Lista de Faixas",
+                        ),
+                    ], start_collapsed=True,
+                ),
+
+            ], width=8)
+
+        ])
 
     def layout(self):
         return html.Div([
@@ -133,7 +134,7 @@ class Content:
                             ),
                             html.Div(id="total_purchase_data")
                         ], width=12
-                    ), label="Ano de Aquisição"),
+                        ), label="Ano de Aquisição"),
                     dbc.Tab(self.config.layout(), label="Configuração")
                 ]
             )
@@ -142,6 +143,7 @@ class Content:
 
     def callbacks(self):
         self.config.callbacks()
+
         @app.callback(
             Output("total_year_graph", 'figure'),
             Output("total_purchase_graph", 'figure'),
@@ -200,7 +202,8 @@ class Content:
         def display_click_data(clickData):
             if clickData:
                 df = self.conn.qyery("CD")
-                df['PURCHASE'] = pd.to_datetime(df['PURCHASE'], errors='coerce')
+                df['PURCHASE'] = pd.to_datetime(
+                    df['PURCHASE'], errors='coerce')
                 df = df[df['PURCHASE'].dt.year == clickData['points'][0]['x']]
                 table_header = [
                     html.Thead(html.Tr([html.Th("ARTIST"), html.Th("TITLE")]))

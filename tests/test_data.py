@@ -9,17 +9,17 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 load_dotenv()
 
 validate_schema = pa.DataFrameSchema({
-    "RELEASE_YEAR": pa.Column(int),
-    "ARTIST": pa.Column(str),
-    "TITLE": pa.Column(str),
-    "MEDIA": pa.Column(str),
-    "PURCHASE": pa.Column(object, nullable=True),
-    "ORIGIN": pa.Column(str, nullable=True),
-    "EDITION_YEAR": pa.Column(float, nullable=True),
-    "IFPI_MASTERING": pa.Column(str, nullable=True),
-    "IFPI_MOULD": pa.Column(str, nullable=True),
-    "MATRIZ": pa.Column(str, nullable=True),
-    "LOTE": pa.Column(str, nullable=True)
+    "RELEASE_YEAR": pa.Column,
+    "ARTIST": pa.Column,
+    "TITLE": pa.Column,
+    "MEDIA": pa.Column,
+    "PURCHASE": pa.Column,
+    "ORIGIN": pa.Column,
+    "EDITION_YEAR": pa.Column,
+    "IFPI_MASTERING": pa.Column,
+    "IFPI_MOULD": pa.Column,
+    "MATRIZ": pa.Column,
+    "LOTE": pa.Column
 })
 
 

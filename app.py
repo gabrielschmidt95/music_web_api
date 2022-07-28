@@ -16,7 +16,6 @@ class CollectionAPP:
             environ['CONNECTION_STRING'],
             environ['DATABASE']
         )
-        self.df = self.conn.qyery("CD")
         self.sidebar = Sidebar(self.conn)
         self.data_modal = Data_Modal(self.conn)
         self.content = Content(self.conn)

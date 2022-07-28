@@ -14,7 +14,13 @@ class MongoDBConn(MongoClient):
         self.conn = MongoClient(self.conn_str)[self.database]
 
     def qyery(self, coll, query=""):
-        df = pd.DataFrame(list(self.conn[coll].find(query)))
+        resp = list(self.conn[coll].find(query))
+        for r in resp:
+            for key, value in r.copy().items():
+                if value is None:
+                    r[key] = ""
+
+        df = pd.DataFrame(resp)
         if df.empty:
             df = pd.DataFrame(columns=['RELEASE_YEAR', 'ARTIST', 'TITLE', 'MEDIA', 'PURCHASE', 'ORIGIN',
                                        'EDITION_YEAR', 'IFPI_MASTERING', 'IFPI_MOULD', 'BARCODE',

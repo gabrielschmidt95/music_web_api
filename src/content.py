@@ -18,7 +18,7 @@ class Content:
         self.discogs_url = "https://api.discogs.com/database/search"
 
     def discogs_get_url(self, row):
-        if "DISCOGS" not in row or row["DISCOGS"] is None:
+        if "DISCOGS" not in row or row["DISCOGS"] is None or "tracks" not in row["DISCOGS"]:
             params = {
                 "token": environ["DISCOGS_TOKEN"],
                 "artist": row["ARTIST"].lower() if not None else "",
@@ -47,13 +47,20 @@ class Content:
                     row["DISCOGS"]["len"] = len(result)
                     _id = row["DISCOGS"]['id']
                     _type = row["DISCOGS"]['type']
-                    row["DISCOGS"]["tracks"] = requests.get(
-                        f"https://api.discogs.com/{_type}s/{_id}").json()["tracklist"]
+                    tracks = requests.get(f"https://api.discogs.com/{_type}s/{_id}")
+                    if tracks.status_code == 200:
+                        row["DISCOGS"].update(tracks=tracks.json()["tracklist"])
+
                     self.conn.replace_one("CD", row["_id"], row)
                 else:
                     return html.Div("Nao encontrado no Discogs")
             else:
                 return html.Div(f"Error:{resp.status_code}")
+
+        if "tracks" in row["DISCOGS"]: 
+            tracklist = row["DISCOGS"]["tracks"]
+        else:
+            tracklist = []
 
         return dbc.Row([
             dbc.Col([
@@ -88,7 +95,7 @@ class Content:
                                     [
                                         dbc.ListGroupItem(
                                             f'{t["position"]} - {t["title"]}'
-                                        ) for t in row["DISCOGS"]["tracks"]
+                                        ) for t in tracklist
                                     ]
                                 )
                             ],

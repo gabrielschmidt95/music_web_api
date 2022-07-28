@@ -9,7 +9,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 load_dotenv()
 
 validate_schema = pa.DataFrameSchema({
-    "RELEASE_YEAR": pa.Column(object),
+    "RELEASE_YEAR": pa.Column(int),
     "ARTIST": pa.Column(object),
     "TITLE": pa.Column(object),
     "MEDIA": pa.Column(object),

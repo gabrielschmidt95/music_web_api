@@ -32,7 +32,6 @@ class Content:
             if resp.status_code == 200:
                 result = resp.json()["results"]
                 if len(result) == 0:
-                    params.pop("country")
                     params.pop("format")
                     resp = requests.get(self.discogs_url, params=params)
                     result = resp.json()["results"]
@@ -40,6 +39,14 @@ class Content:
                         params.pop("year")
                         resp = requests.get(self.discogs_url, params=params)
                         result = resp.json()["results"]
+                        if len(result) == 0:
+                            params.pop("country")
+                            resp = requests.get(self.discogs_url, params=params)
+                            result = resp.json()["results"]
+                            if len(result) == 0:
+                                params.pop("barcode")
+                                resp = requests.get(self.discogs_url, params=params)
+                                result = resp.json()["results"]
 
                 if len(result) > 0:
                     row["DISCOGS"] = result[0]

@@ -75,7 +75,7 @@ class Config:
                                      is_open=True,  duration=4000, color="danger")
 
                 COLUMNS = ('RELEASE_YEAR', 'ARTIST', 'TITLE', 'MEDIA', 'PURCHASE', 'ORIGIN',
-                           'EDITION_YEAR', 'IFPI_MASTERING', 'IFPI_MOULD', 'BARCODE', 'MATRIZ', 'LOTE', 'ANO_AQUISICAO', 'RECENTE', 'LISTA')
+                           'EDITION_YEAR', 'IFPI_MASTERING', 'IFPI_MOULD', 'BARCODE', 'MATRIZ', 'LOTE')
 
                 for col in df.select_dtypes(include=['datetime64']).columns.tolist():
                     df[col] = df[col].astype(str)
@@ -132,6 +132,7 @@ class Config:
             else:
                 df = self.conn.qyery("CD")
                 df.drop('_id', axis=1, inplace=True)
+                df.drop('DISCOGS', axis=1, inplace=True)
                 df['PURCHASE'] = pd.to_datetime(df['PURCHASE']).dt.date
                 df.replace({pd.NaT: None, np.nan: None, "NaT": None,
                            "": None, "None": None}, inplace=True)

@@ -56,7 +56,7 @@ class Sidebar:
             if _filter != {}:
                 _query = ""
                 for key, value in _filter.items():
-                    _query += f"{key} == '{value}' & "
+                    _query += f"""{key} == "{value}" & """
 
                 _query = _query[:_query.rfind("&")]
                 dff = df.query(_query)

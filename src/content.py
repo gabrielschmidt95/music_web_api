@@ -168,7 +168,7 @@ class Content:
             if _filter:
                 _query = ""
                 for key, value in _filter.items():
-                    _query += f"{key} == '{value}' & "
+                    _query += f"""{key} == "{value}" & """
 
                 _query = _query[:_query.rfind("&")]
                 df = self.conn.qyery("CD").query(_query)
@@ -293,7 +293,7 @@ class Content:
                                    for k, v in _filter.items() if v is not None)
                 _query = ""
                 for key, value in _filter.items():
-                    _query += f"{key} == '{value}' & "
+                    _query += f"""{key} == "{value}" & """
 
                 _query = _query[:_query.rfind("&")]
 

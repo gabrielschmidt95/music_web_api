@@ -2,6 +2,7 @@ from dash import html, dcc, Input, Output, State, callback_context, ALL
 import dash_bootstrap_components as dbc
 import plotly.express as px
 from .config import Config
+from src.track import Track
 from server import app
 from json import loads
 from os import environ
@@ -15,6 +16,7 @@ class Content:
         self.conn = conn
         self.MAX_INDEX = 3
         self.config = Config(self.conn)
+        self.track = Track(self.conn)
         self.discogs_url = "https://api.discogs.com/database/search"
 
     def discogs_get_url(self, row):
@@ -149,7 +151,8 @@ class Content:
                             html.Div(id="total_purchase_data")
                         ], width=12
                         ), label="Ano de Aquisição"),
-                    dbc.Tab(self.config.layout(), label="Configuração")
+                    dbc.Tab(self.track.layout(), label="Rastreio"),
+                    dbc.Tab(self.config.layout(), label="Configuração"),
                 ]
             )
         ], className='custom-content'
@@ -157,6 +160,7 @@ class Content:
 
     def callbacks(self):
         self.config.callbacks()
+        self.track.callbacks()
 
         @app.callback(
             Output("total_year_graph", 'figure'),

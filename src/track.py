@@ -1,3 +1,4 @@
+from datetime import datetime
 from dash import html, dcc, Input, Output, State
 import dash_bootstrap_components as dbc
 from server import app
@@ -67,7 +68,8 @@ class Track:
                                             html.P(
                                                 f'Destino: {event["unidadeDestino"]["nome"]}' if "unidadeDestino" in event else ""),
                                             html.P(
-                                                f'Origem: {event["unidade"]["nome"]}')
+                                                f'Origem: {event["unidade"]["nome"]}'),
+                                            html.P(datetime.strptime(event["dtHrCriado"], "%Y-%m-%dT%H:%M:%S").strftime("Dia: %d/%m/%Y Hora: %H:%M:%S"))
                                         ], width=10, align="center"),
                                     ])
                                 ]

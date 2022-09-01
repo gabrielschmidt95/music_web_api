@@ -52,6 +52,7 @@ class Track:
                 f"https://proxyapp.correios.com.br/v1/sro-rastro/{_track_id}")
             if track.status_code == 200:
                 track = track.json()["objetos"][0]
+                print(track)
                 return dbc.Accordion(
                     [
                         dbc.AccordionItem([
@@ -66,9 +67,9 @@ class Track:
                                         dbc.Col([
                                             html.H6(event["descricao"]),
                                             html.P(
-                                                f'Destino: {event["unidadeDestino"]["nome"]}' if "unidadeDestino" in event else ""),
+                                                f'Destino: {event["unidadeDestino"]}' if "unidadeDestino" in event else ""),
                                             html.P(
-                                                f'Origem: {event["unidade"]["nome"]}'),
+                                                f'Origem: {event["unidade"] if "unidade" in event else ""}'),
                                             html.P(datetime.strptime(event["dtHrCriado"], "%Y-%m-%dT%H:%M:%S").strftime("Dia: %d/%m/%Y Hora: %H:%M:%S"))
                                         ], width=10, align="center"),
                                     ])

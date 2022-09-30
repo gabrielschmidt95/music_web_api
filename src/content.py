@@ -301,10 +301,10 @@ class Content:
 
                 _query = _query[:_query.rfind("&")]
 
-                if len(df.query(_query)) > 30:
+                if len(df.query(_query)) > 50:
                     warning = dbc.Alert(
                         [
-                            html.H4("Acima de 30 unidades encontradas",
+                            html.H4("Acima de 50 unidades encontradas",
                                     className="alert-heading"),
                             html.P(
                                 "Utilize o filtro de forma mais granular ou Realize o download da Planilha"

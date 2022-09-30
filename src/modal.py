@@ -179,12 +179,23 @@ class Data_Modal:
                         ),
                         dbc.Label("ORIGEM", html_for="ORIGIN", width=2),
                         dbc.Col(
-                            dbc.Input(
+                            dcc.Dropdown(
+                                id={'type': 'edit-data', 'index': "ORIGIN"},
+                                options=[
+                                    {'label': str(i), 'value': str(i)}
+                                    for i in sorted(self.conn.qyery("CD")['ORIGIN'].unique())],
+                                value=media["ORIGIN"] if "ORIGIN" in media else None,
+                                optionHeight=40,
+                                clearable=False,
+                            ) if len(self.conn.qyery("CD")['MEDIA'].unique()) > 0 else dbc.Input(
                                 type="text",
                                 id={'type': 'edit-data', 'index': "ORIGIN"},
                                 value=media["ORIGIN"] if "ORIGIN" in media else None,
                             ),
-                            width=3,
+                            width=3, id={'type': 'add_media', 'index': "add_origin_col"}
+                        ),
+                        dbc.Col(
+                            dbc.Button(color="primary", className="bi bi-plus-circle", id={'type': 'add_media', 'index': "add_origin_btn"}), width=1
                         ),
                     ],
                     className="mb-3",
@@ -369,3 +380,17 @@ class Data_Modal:
                     id={'type': 'edit-data', 'index': "ARTIST"},
                     placeholder="Digite o Artista"
                 )
+        
+        @app.callback(
+            Output({'type': 'add_media', 'index': "add_origin_col"}, 'children'),
+            Input({'type': 'add_media', 'index': "add_origin_btn"}, 'n_clicks'),
+            prevent_initial_call=True
+        )
+        def update_options(n_clicks):
+            if n_clicks:
+                return dbc.Input(
+                    type="text",
+                    id={'type': 'edit-data', 'index': "ORIGIN"},
+                    placeholder="Digite a Origem"
+                )
+

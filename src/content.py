@@ -285,7 +285,7 @@ class Content:
                         html.P(
                             "Utilize os filtros para realizar a pesquisa"
                         ),
-                    ], style={"margin-top": "1rem"}
+                    ], style={"margin-top": "1rem" , "background-color":"#fff", "color":"#0d6efd", "border-color": "#0d6efd"}
                 )
                 return welcome, _filter
             else:

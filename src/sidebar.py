@@ -1,3 +1,4 @@
+from turtle import color
 from dash import html, dcc, Input, Output
 import dash_bootstrap_components as dbc
 from server import app
@@ -11,7 +12,7 @@ class Sidebar:
     def layout(self):
         return dbc.Col(
             [
-                html.H2("Music", className="display-4"),
+                html.H2("Music", className="display-4", style={"color":"#0d6efd"}),
                 html.Hr(),
                 html.P("Collection Mananger", className="lead"),
                 html.Hr(),
@@ -36,7 +37,7 @@ class Sidebar:
             df = self.conn.qyery("CD")
 
             table_header = [
-                html.Thead(html.Tr([html.Th("MEDIA"), html.Th("QUANTIDADE")]))
+                html.Thead(html.Tr([html.Th("MEDIA", style={"color":"#0d6efd"}), html.Th("QUANTIDADE", style={"color":"#0d6efd"})]))
             ]
             rows = [
                 html.Tr([html.Td(i), html.Td(

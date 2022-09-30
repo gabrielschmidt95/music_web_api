@@ -37,8 +37,14 @@ class MongoDBConn(MongoClient):
 
         return df
 
+    def find_all(self, coll):
+        return list(self.conn[coll].find())
+
     def find_one(self, coll, id):
         return self.conn[coll].find_one(ObjectId(id))
+    
+    def find_custom(self, coll, field, value):
+        return self.conn[coll].find_one({field:value})
 
     def replace_one(self, coll, id, replace_data):
         return self.conn[coll].replace_one({"_id": ObjectId(id)}, replace_data)

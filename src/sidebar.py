@@ -1,4 +1,3 @@
-from turtle import color
 from dash import html, dcc, Input, Output
 import dash_bootstrap_components as dbc
 from server import app

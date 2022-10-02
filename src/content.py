@@ -32,7 +32,10 @@ class Content:
             }
             resp = requests.get(self.discogs_url, params=params)
             if resp.status_code == 200:
-                result = resp.json()["results"]
+                result = resp.json()
+                if "results" not in result:
+                    return html.Div("Nao encontrado no Discogs")
+                result = result["results"]
                 if len(result) == 0:
                     params.pop("format")
                     resp = requests.get(self.discogs_url, params=params)
@@ -269,7 +272,6 @@ class Content:
             prevent_initial_call=True
         )
         def update_output(value, _, url, _filter):
-            df = self.conn.qyery("CD")
             cxt = callback_context.triggered
             if not any(value):
                 if cxt[0]['value'] == None:
@@ -300,7 +302,7 @@ class Content:
                     _query += f"""{key} == "{value}" & """
 
                 _query = _query[:_query.rfind("&")]
-
+                df = self.conn.qyery("CD")
                 if len(df.query(_query)) > 50:
                     warning = dbc.Alert(
                         [

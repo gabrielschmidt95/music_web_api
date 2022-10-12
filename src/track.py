@@ -1,5 +1,4 @@
-from datetime import datetime
-from dash import html, Input, Output, State
+from dash import html, Input, Output, State, dash_table
 import dash_bootstrap_components as dbc
 from server import app
 from time import sleep
@@ -10,6 +9,7 @@ class Track:
 
     def __init__(self, conn):
         self.conn = conn
+        self.correiosUri = "http://webservice.correios.com.br/service/rest/rastro/rastroMobile"
 
     def layout(self):
         return dbc.ListGroup(
@@ -81,6 +81,22 @@ class Track:
             ]
         )
 
+    def getTrack(self, trackId):
+        return requests.post(
+            self.correiosUri,
+            headers={"Content-Type": "application/xml"},
+            data=f"""
+            <rastroObjeto>
+                <usuario>USER</usuario>
+                <senha>PASS</senha>
+                <tipo>L</tipo>
+                <resultado>T</resultado>
+                <objetos>{trackId}</objetos>
+                <lingua>101</lingua>
+                <token>TOKEN</token>
+            </rastroObjeto>"""
+        )
+
     def callbacks(self):
         @ app.callback(
             Output("track-saved", "children"),
@@ -97,22 +113,30 @@ class Track:
                                 [
                                     dbc.Row([
                                         dbc.Col([
-                                            dbc.Row(html.Img(
-                                                src=f"https://rastreamento.correios.com.br/static/rastreamento-internet/imgs/{event['urlIcone'].split('/')[-1]}"
-                                            ), justify="center")
-                                        ], width=1, align="center"),
-                                        dbc.Col([
-                                            html.H6(event["descricao"]),
-                                            html.P(
-                                                f'Destino: {event["unidadeDestino"]}' if "unidadeDestino" in event else ""),
-                                            html.P(
-                                                f'Origem: {event["unidade"] if "unidade" in event else ""}'),
-                                            html.P(datetime.strptime(
-                                                event["dtHrCriado"], "%Y-%m-%dT%H:%M:%S").strftime("Dia: %d/%m/%Y Hora: %H:%M:%S"))
-                                        ], width=10, align="center"),
+                                            html.H5(event["descricao"]),
+                                            dbc.Table([
+                                                html.Thead(
+                                                    html.Tr([
+                                                        html.Th("Data") if "dataPostagem" in event else None, 
+                                                        html.Th("Origem") if "unidade" in event else None, 
+                                                        html.Th("Destino") if "destino" in event else None
+                                                    ])
+                                                )
+                                            ] + [
+                                            html.Tbody([
+                                                html.Tr([
+                                                    html.Td(event["dataPostagem"]) if "dataPostagem" in event else None, 
+                                                    html.Td(event["destino"][0]["local"] if "local" in event["destino"][0] else event["destino"][0]) if "destino" in event else None, 
+                                                    html.Td(event["unidade"]["local"] if "local" in event["unidade"] else event["unidade"]) if "unidade" in event else None
+                                                ])
+                                            ])
+                                            ], 
+                                            bordered=False,
+                                            responsive=True),
+                                        ], width=5, align="center"),
                                     ])
                                 ]
-                            ) for event in requests.get(f"https://proxyapp.correios.com.br/v1/sro-rastro/{postal['TRACK_CODE']}").json()["objetos"][0]["eventos"]
+                            ) for event in self.getTrack(postal["TRACK_CODE"]).json()["objeto"][0]["evento"]
                         ],
                         title=postal["TRACK_CODE"],
                     )
@@ -127,10 +151,9 @@ class Track:
             prevent_initial_call=True,
         )
         def on_track_button_click(click, _track_id):
-            track = requests.get(
-                f"https://proxyapp.correios.com.br/v1/sro-rastro/{_track_id}")
+            track = self.getTrack(_track_id)
             if track.status_code == 200:
-                track = track.json()["objetos"][0]
+                track = track.json()["objeto"][0]
                 return dbc.Accordion(
                     [
                         dbc.AccordionItem([
@@ -138,25 +161,34 @@ class Track:
                                 [
                                     dbc.Row([
                                         dbc.Col([
-                                            dbc.Row(html.Img(
-                                                src=f"https://rastreamento.correios.com.br/static/rastreamento-internet/imgs/{event['urlIcone'].split('/')[-1]}"
-                                            ), justify="center")
-                                        ], width=1, align="center"),
-                                        dbc.Col([
                                             html.H6(event["descricao"]),
-                                            html.P(
-                                                f'Destino: {event["unidadeDestino"]}' if "unidadeDestino" in event else ""),
-                                            html.P(
-                                                f'Origem: {event["unidade"] if "unidade" in event else ""}'),
-                                            html.P(datetime.strptime(
-                                                event["dtHrCriado"], "%Y-%m-%dT%H:%M:%S").strftime("Dia: %d/%m/%Y Hora: %H:%M:%S"))
-                                        ], width=10, align="center"),
+                                            dbc.Table([
+                                                html.Thead(
+                                                    html.Tr([
+                                                        html.Th("Origem") if "unidade" in event else None, 
+                                                        html.Th("Destino") if "destino" in event else None
+                                                    ])
+                                                )
+                                            ] + [
+                                            html.Tbody([
+                                                html.Tr([
+                                                    html.Td(event["destino"][0]["local"] if "local" in event["destino"][0] else event["destino"][0]) if "destino" in event else None, 
+                                                    html.Td(event["unidade"]["local"] if "local" in event["unidade"] else event["unidade"]) if "unidade" in event else None
+                                                ])
+                                            ])
+                                            ], 
+                                            bordered=False,
+                                            responsive=True),
+                                            html.P(f'Data: {event["dataPostagem"]}')
+                                        ], width=5, align="center"),
                                     ])
                                 ]
-                            ) for event in track["eventos"]
-                        ], title=f'{track["codObjeto"]} - {track["tipoPostal"]["categoria"]} - {track["tipoPostal"]["descricao"]}'),
+                            ) for event in track["evento"]
+                        ], title=f'{track["numero"]} - {track["categoria"]}'),
                     ],
-                ) if "eventos" in track else dbc.Alert("Objeto nao encontrado", is_open=True, dismissable=True)
+                ) if "evento" in track else dbc.Alert("Objeto nao encontrado", is_open=True, dismissable=True)
+            else:
+                return dbc.Alert(f"Erro {track.status_code}", is_open=True, dismissable=True)
 
         @ app.callback(
             Output("save_alert", "children"),
@@ -167,10 +199,9 @@ class Track:
         )
         def on_track_button_click(click, track_code):
             if click > 0 and track_code is not None:
-                track = requests.get(
-                    f"https://proxyapp.correios.com.br/v1/sro-rastro/{track_code}")
+                track = self.getTrack(track_code)
                 if track.status_code == 200:
-                    if "eventos" in track.json()["objetos"][0]:
+                    if "evento" in track.json()["objeto"][0]:
                         if self.conn.find_custom("POSTAL", "TRACK_CODE", track_code) is None:
                             self.conn.insert_one(
                                 "POSTAL", {"TRACK_CODE": track_code})

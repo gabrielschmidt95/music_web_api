@@ -97,6 +97,41 @@ class Track:
             </rastroObjeto>"""
         )
 
+    def track_table(self, event):
+        return dbc.Row([
+            dbc.Col([
+                html.H5(event["descricao"]),
+                dbc.Table([
+                    html.Thead(
+                        html.Tr([
+                            html.Th(
+                                "Data") if "dataPostagem" in event else None,
+                            html.Th(
+                                "Origem") if "unidade" in event else None,
+                            html.Th(
+                                "Destino") if "destino" in event else None
+                        ])
+                    )
+                ] + [
+                    html.Tbody([
+                        html.Tr([
+                            html.Td(
+                                event["dataPostagem"]
+                            ) if "dataPostagem" in event else None,
+                            html.Td(event["unidade"]["local"] if "local" in event["unidade"]
+                                    else event["unidade"]
+                            ) if "unidade" in event else None,
+                            html.Td(event["destino"][0]["local"] if "local" in event["destino"]
+                                    [0] else event["destino"][0]
+                            ) if "destino" in event else None
+                        ])
+                    ])
+                ],
+                    bordered=False,
+                    responsive=True),
+            ], width=6, align="center"),
+        ])
+
     def callbacks(self):
         @ app.callback(
             Output("track-saved", "children"),
@@ -111,34 +146,11 @@ class Track:
                         [
                             dbc.ListGroupItem(
                                 [
-                                    dbc.Row([
-                                        dbc.Col([
-                                            html.H5(event["descricao"]),
-                                            dbc.Table([
-                                                html.Thead(
-                                                    html.Tr([
-                                                        html.Th("Data") if "dataPostagem" in event else None, 
-                                                        html.Th("Origem") if "unidade" in event else None, 
-                                                        html.Th("Destino") if "destino" in event else None
-                                                    ])
-                                                )
-                                            ] + [
-                                            html.Tbody([
-                                                html.Tr([
-                                                    html.Td(event["dataPostagem"]) if "dataPostagem" in event else None, 
-                                                    html.Td(event["destino"][0]["local"] if "local" in event["destino"][0] else event["destino"][0]) if "destino" in event else None, 
-                                                    html.Td(event["unidade"]["local"] if "local" in event["unidade"] else event["unidade"]) if "unidade" in event else None
-                                                ])
-                                            ])
-                                            ], 
-                                            bordered=False,
-                                            responsive=True),
-                                        ], width=5, align="center"),
-                                    ])
+                                    self.track_table(event)
                                 ]
                             ) for event in self.getTrack(postal["TRACK_CODE"]).json()["objeto"][0]["evento"]
                         ],
-                        title=postal["TRACK_CODE"],
+                        title=f'{postal["TRACK_CODE"]}',
                     )
                     for postal in self.conn.find_all("POSTAL")],
                 start_collapsed=True
@@ -159,32 +171,10 @@ class Track:
                         dbc.AccordionItem([
                             dbc.ListGroupItem(
                                 [
-                                    dbc.Row([
-                                        dbc.Col([
-                                            html.H6(event["descricao"]),
-                                            dbc.Table([
-                                                html.Thead(
-                                                    html.Tr([
-                                                        html.Th("Origem") if "unidade" in event else None, 
-                                                        html.Th("Destino") if "destino" in event else None
-                                                    ])
-                                                )
-                                            ] + [
-                                            html.Tbody([
-                                                html.Tr([
-                                                    html.Td(event["destino"][0]["local"] if "local" in event["destino"][0] else event["destino"][0]) if "destino" in event else None, 
-                                                    html.Td(event["unidade"]["local"] if "local" in event["unidade"] else event["unidade"]) if "unidade" in event else None
-                                                ])
-                                            ])
-                                            ], 
-                                            bordered=False,
-                                            responsive=True),
-                                            html.P(f'Data: {event["dataPostagem"]}')
-                                        ], width=5, align="center"),
-                                    ])
+                                    self.track_table(event)
                                 ]
                             ) for event in track["evento"]
-                        ], title=f'{track["numero"]} - {track["categoria"]}'),
+                        ], title=f'{track["numero"]} - {track["evento"][0]["descricao"]}'),
                     ],
                 ) if "evento" in track else dbc.Alert("Objeto nao encontrado", is_open=True, dismissable=True)
             else:

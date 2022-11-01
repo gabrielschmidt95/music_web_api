@@ -137,6 +137,7 @@ class Track:
             Output("track-saved", "children"),
             Input("confirm_track_delete", "n_clicks"),
             Input('save_track_btn', 'n_clicks'),
+            prevent_initial_call=True
         )
         def on_track_button_click(delete, saved):
             sleep(1)
@@ -178,7 +179,7 @@ class Track:
                     ],
                 ) if "evento" in track else dbc.Alert("Objeto nao encontrado", is_open=True, dismissable=True)
             else:
-                return dbc.Alert(f"Erro {track.status_code}", is_open=True, dismissable=True)
+                return dbc.Alert(f"Erro {track.status_code}- {track}", is_open=True, dismissable=True)
 
         @ app.callback(
             Output("save_alert", "children"),

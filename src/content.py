@@ -154,7 +154,7 @@ class Content:
                             html.Div(id="total_purchase_data")
                         ], width=12
                         ), label="Ano de Aquisição"),
-                    dbc.Tab(self.track.layout(), label="Rastreio"),
+                    #dbc.Tab(self.track.layout(), label="Rastreio"),
                     dbc.Tab(self.config.layout(), label="Configuração"),
                 ]
             )
@@ -163,7 +163,7 @@ class Content:
 
     def callbacks(self):
         self.config.callbacks()
-        self.track.callbacks()
+        #self.track.callbacks()
 
         @app.callback(
             Output("total_year_graph", 'figure'),

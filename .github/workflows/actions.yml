@@ -34,5 +34,5 @@ jobs:
         with:
           context: .
           push: true
-          tags: gabrieloliveira95/music-col-manager.latest
+          tags: gabrieloliveira95/music-col-manager:latest
           labels: ${{ steps.meta.outputs.labels }}

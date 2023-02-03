@@ -33,12 +33,20 @@ jobs:
           images: gabrieloliveira95/music-col-manager
       
       - name: Build and push Docker image
+        if: ${{ env.PROD }}
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: .
           push: true
           labels: ${{ steps.meta.outputs.labels }}
-          - if: ${{ env.PUSH_PACKAGES }}
           tags: gabrieloliveira95/music-col-manager:latest
-          - if: ${{ env.DEV }}
+      
+      - name: Build and push Docker image
+        if: ${{ env.DEV }}
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: .
+          push: true
+          labels: ${{ steps.meta.outputs.labels }}
+          tags: gabrieloliveira95/music-col-manager:latest
           tags: gabrieloliveira95/music-col-manager:dev

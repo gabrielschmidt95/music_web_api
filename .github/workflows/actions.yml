@@ -13,9 +13,7 @@ jobs:
   push_to_registry:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
-    env:
-      PROD: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-      DEV: ${{ github.event_name == 'pull_request'}}
+
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
@@ -33,7 +31,7 @@ jobs:
           images: ***REMOVED***
       
       - name: Build and push Docker image
-        if: ${{ env.PROD }}
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: .
@@ -42,7 +40,7 @@ jobs:
           tags: ***REMOVED***:latest
       
       - name: Build and push Docker image
-        if: ${{ env.DEV }}
+        if: ${{ github.event_name == 'pull_request'}}
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: .

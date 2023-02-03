@@ -9,6 +9,7 @@ from src.modal import Data_Modal
 
 load_dotenv()
 
+
 class CollectionAPP:
 
     def __init__(self):
@@ -23,7 +24,7 @@ class CollectionAPP:
         self.create_callbacks()
 
     def create_layout(self):
-        app.layout = html.Div(children=[    
+        app.layout = html.Div(children=[
             self.sidebar.layout(),
             self.content.layout(),
             self.data_modal.layout(),
@@ -34,7 +35,7 @@ class CollectionAPP:
             dcc.Store(id='delete_id'),
             dcc.Location(id='url')
         ])
-    
+
     def create_callbacks(self):
         self.sidebar.callbacks()
         self.data_modal.callbacks()
@@ -42,6 +43,7 @@ class CollectionAPP:
 
     def run(self):
         app.run_server(debug=True, port=5000)
+
 
 if __name__ == '__main__':
     CollectionAPP().run()

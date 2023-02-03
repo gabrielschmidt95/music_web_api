@@ -48,5 +48,4 @@ jobs:
           context: .
           push: true
           labels: ${{ steps.meta.outputs.labels }}
-          tags: ***REMOVED***:latest
           tags: ***REMOVED***:dev

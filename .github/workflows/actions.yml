@@ -13,6 +13,9 @@ jobs:
   push_to_registry:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
+    env:
+      PROD: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+      DEV: ${{ github.event_name == 'pull_request'}}
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
@@ -34,5 +37,8 @@ jobs:
         with:
           context: .
           push: true
-          tags: ***REMOVED***:latest
           labels: ${{ steps.meta.outputs.labels }}
+          - if: ${{ env.PUSH_PACKAGES }}
+          tags: ***REMOVED***:latest
+          - if: ${{ env.DEV }}
+          tags: ***REMOVED***:dev

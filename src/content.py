@@ -133,42 +133,6 @@ class Content:
             dcc.Download(id="download_xlsx"),
             html.Div(id="download_alert"),
             html.Div(id="upload_alert"),
-            html.Div(id="sync_alert"),
-            dbc.Tabs(
-                [
-                    dbc.Tab([
-                        dcc.Loading([
-                            html.Div(id='disco')
-                        ]
-                        ),
-                    ], label="Principal"
-                    ),
-                    dbc.Tab(
-                        dbc.Col([
-                            dcc.Loading(
-                                dcc.Graph(
-                                    id='total_year_graph',
-                                    responsive=True
-                                )
-                            ),
-                            html.Div(id="total_year_data")
-                        ], width=12),
-                        label="Ano de Lançamento"
-                    ),
-                    dbc.Tab(
-                        dbc.Col([
-                            dcc.Loading(
-                                dcc.Graph(
-                                    id='total_purchase_graph',
-                                    responsive=True
-                                )
-                            ),
-                            html.Div(id="total_purchase_data")
-                        ], width=12
-                        ), label="Ano de Aquisição"),
-                    #dbc.Tab(self.track.layout(), label="Rastreio"),
-                ]
-            ),
             dbc.Row([
                     dbc.Col(
                         dbc.ButtonGroup(
@@ -195,21 +159,53 @@ class Content:
                                     className="bi bi-plus-circle",
                                     outline=True,
                                     id="insert_btn"
-                                ),
-                                dbc.Button(
-                                    " Sincronizar Bases",
-                                    color="primary",
-                                    className="bi bi-arrow-repeat",
-                                    outline=True,
-                                    id="sync_btn"
                                 )
-                            ],style={"width":"100%"}
+                            ], style={"width": "100%"}
                         ),
                         width=12
                     )
-                    ])
+                ]
+            ),
+            html.Br(),
+            dbc.Card(
+                dbc.Tabs(
+                    [
+                        dbc.Tab([
+                            dcc.Loading([
+                                html.Div(id='disco')
+                            ]
+                            ),
+                        ], label="Artistas",
+                        ),
+                        dbc.Tab(
+                            dbc.Col([
+                                dcc.Loading(
+                                    dcc.Graph(
+                                        id='total_year_graph',
+                                        responsive=True
+                                    )
+                                ),
+                                html.Div(id="total_year_data")
+                            ], width=12
+                            ), label="Ano de Lançamento"
+                        ),
+                        dbc.Tab(
+                            dbc.Col([
+                                dcc.Loading(
+                                    dcc.Graph(
+                                        id='total_purchase_graph',
+                                        responsive=True
+                                    )
+                                ),
+                                html.Div(id="total_purchase_data")
+                            ], width=12
+                            ), label="Ano de Aquisição"
+                        ),
+                    ]
+                )
+            )
         ], className='custom-content'
-        )
+    )
 
     def callbacks(self):
 
@@ -241,7 +237,7 @@ class Content:
                 title="Ano de Lançamento",
                 text_auto=True,
                 height=600
-            )
+            ).update_layout(showlegend=False, clickmode='event+select')
             total_year.update_layout(
                 showlegend=False, hovermode="x unified", clickmode='event+select')
             total_year.update_traces(
@@ -531,22 +527,6 @@ class Content:
                         html.P(f"TIPO ESPERADO: {error.check}")
                     ], is_open=True, color="danger"
                     )
-
-        @app.callback(
-            Output("sync_alert", "children"),
-            Input('sync_btn', 'n_clicks'),
-            prevent_initial_call=True,
-        )
-        def sync(n_clicks):
-            from data.data_center import MongoDBConn
-            local_conn = MongoDBConn(
-                environ['CONNECTION_STRING_LOCAL'],
-                environ['DATABASE']
-            )
-            df = local_conn.qyery("CD")
-            self.conn.drop("CD")
-            self.conn.insert_many("CD", df)
-            return dbc.Alert("SYNC", is_open=True,  duration=4000)
 
         @app.callback(
             Output("download_xlsx", "data"),

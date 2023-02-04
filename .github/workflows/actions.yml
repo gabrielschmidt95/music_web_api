@@ -28,7 +28,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
-          images: gabrieloliveira95/music-col-manager
+          images: ${{ secrets.DOCKER_HUB_IMAGE }}
       
       - name: Build and push Docker image
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -37,7 +37,7 @@ jobs:
           context: .
           push: true
           labels: ${{ steps.meta.outputs.labels }}
-          tags: gabrieloliveira95/music-col-manager:latest
+          tags: ${{ secrets.DOCKER_HUB_IMAGE }}:latest
       
       - name: Build and push Docker image
         if: ${{ github.event_name == 'pull_request'}}
@@ -46,4 +46,4 @@ jobs:
           context: .
           push: true
           labels: ${{ steps.meta.outputs.labels }}
-          tags: gabrieloliveira95/music-col-manager:dev
+          tags: ${{ secrets.DOCKER_HUB_IMAGE }}:dev

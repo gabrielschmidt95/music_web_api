@@ -11,6 +11,7 @@ A small dashboard to help my dad with his music collection
 - Dash
 - Plotly
 - Mongodb
+- Docker
 
 ## Create a Local Mongo Database in Docker 
 

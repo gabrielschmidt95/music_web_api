@@ -1,1 +1,0 @@
-web: waitress-serve --listen=*:$PORT wsgi:app.server

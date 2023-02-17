@@ -202,7 +202,7 @@ class Content:
                             ), label="Ano de Aquisição"
                         ),
                     ]
-                )
+                ),className='dark-tabs'
             )
         ], className='custom-content'
     )

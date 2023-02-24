@@ -24,7 +24,7 @@ class Sidebar:
                     ]
                 )
             ],
-            className="custom-sidebar-dark"
+            className="custom-sidebar"
         )
 
     def callbacks(self):

@@ -236,7 +236,8 @@ class Content:
             },
                 title="Ano de Lançamento",
                 text_auto=True,
-                height=600
+                height=600,
+                template="plotly_dark"
             ).update_layout(showlegend=False, clickmode='event+select')
             total_year.update_layout(
                 showlegend=False, hovermode="x unified", clickmode='event+select')
@@ -256,7 +257,8 @@ class Content:
                 },
                 title="Ano de Aquisição",
                 text_auto=True,
-                height=600
+                height=600,
+                template="plotly_dark"
             ).update_layout(showlegend=False, clickmode='event+select')
             return total_year, total_purchase
 
@@ -331,7 +333,7 @@ class Content:
                         html.P(
                             "Utilize os filtros para realizar a pesquisa"
                         ),
-                    ], style={"margin-top": "1rem", "background-color": "#fff", "color": "#0d6efd", "border-color": "#0d6efd"}
+                    ], style={"margin-top": "1rem"}
                 )
                 return welcome, _filter
             else:

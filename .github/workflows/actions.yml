@@ -26,5 +26,5 @@ jobs:
           docker login ${{secrets.REGION_KEY}} -u "${{secrets.USER}}" -p "${{secrets.TOKEN}}"
           docker version
           docker build -t music-collection-app .
-          docker tag music-collection-api:latest ${{secrets.REGION_KEY}}/${{secrets.TENANCY}}/music-collection-app:latest
+          docker tag music-collection-app:latest ${{secrets.REGION_KEY}}/${{secrets.TENANCY}}/music-collection-app:latest
           docker push ${{secrets.REGION_KEY}}/${{secrets.TENANCY}}/music-collection-app:latest

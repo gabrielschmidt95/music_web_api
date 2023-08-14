@@ -41,6 +41,10 @@ class CollectionAPP:
         self.data_modal.callbacks()
         self.content.callbacks()
 
+    @app.server.route("/ping")
+    def ping():
+        return "{status: ok}"
+
     def run(self):
         app.run_server(debug=True, port=5000)
 

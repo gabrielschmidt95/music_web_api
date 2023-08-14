@@ -83,8 +83,7 @@ class GoogleAuth(Auth):
             return self.login_request()
         else:
             # user is successfully authenticated
-            google = self.__get_google_auth(
-                state=flask.session[AUTH_STATE_KEY])
+            google = self.__get_google_auth()
             try:
                 token = google.fetch_token(
                     os.environ.get('GOOGLE_AUTH_TOKEN_URI'),

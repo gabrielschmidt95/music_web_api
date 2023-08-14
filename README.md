@@ -31,5 +31,13 @@ Create .env file with
 CONNECTION_STRING=mongodb://<user>:<pass>@<host>
 DATABASE=MEDIA
 STAGE=DEV
+DASH_DEBUG_MODE=True
+DISCOGS_TOKEN=""
+GOOGLE_AUTH_URL=https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&prompt=consent
+GOOGLE_AUTH_TOKEN_URI=https://oauth2.googleapis.com/token
+GOOGLE_AUTH_REDIRECT_URI=""
+GOOGLE_AUTH_USER_INFO_URL=https://www.googleapis.com/userinfo/v2/me
+GOOGLE_AUTH_CLIENT_ID=""
+GOOGLE_AUTH_CLIENT_SECRET=""
 
 ```

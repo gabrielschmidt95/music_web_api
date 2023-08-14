@@ -42,7 +42,7 @@ class CollectionAPP:
         self.content.callbacks()
 
     @app.server.route("/ping")
-    def ping():
+    def ping(self):
         return "{status: ok}"
 
     def run(self):

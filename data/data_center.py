@@ -27,13 +27,13 @@ class MongoDBConn(MongoClient):
                                        'MATRIZ', 'LOTE'])
 
         df["PURCHASE"] = df["PURCHASE"].astype('datetime64[ns]')
-        df.replace({pd.NaT: None, np.nan: None, "NaT": None, "": None}, inplace=True)
+        df.replace({pd.NaT: None, np.nan: None,
+                   "NaT": None, "": None}, inplace=True)
         df["ARTIST"] = df["ARTIST"].astype(str)
         df["TITLE"] = df["TITLE"].astype(str)
         df["MEDIA"] = df["MEDIA"].astype(str)
         df["ORIGIN"] = df["ORIGIN"].astype(str)
         df["BARCODE"] = df["BARCODE"].astype(str)
-
 
         return df
 
@@ -42,9 +42,9 @@ class MongoDBConn(MongoClient):
 
     def find_one(self, coll, id):
         return self.conn[coll].find_one(ObjectId(id))
-    
+
     def find_custom(self, coll, field, value):
-        return self.conn[coll].find_one({field:value})
+        return self.conn[coll].find_one({field: value})
 
     def replace_one(self, coll, id, replace_data):
         return self.conn[coll].replace_one({"_id": ObjectId(id)}, replace_data)
@@ -53,18 +53,22 @@ class MongoDBConn(MongoClient):
         return self.conn[coll].insert_one(insert_data)
 
     def delete_one(self, coll, _id):
-        deleted_count = self.conn[coll].delete_one({"_id": ObjectId(_id)}).deleted_count
+        deleted_count = self.conn[coll].delete_one(
+            {"_id": ObjectId(_id)}).deleted_count
         if not deleted_count:
-            deleted_count = self.conn[coll].delete_one({"_id": _id}).deleted_count
+            deleted_count = self.conn[coll].delete_one(
+                {"_id": _id}).deleted_count
         return deleted_count
-    
+
     def delete_many(self, coll, ids):
-        list_ids = [ ObjectId(_id) for _id in ids ]
-        return self.conn[coll].delete_many({"_id": { "$in": list_ids}})
-    
+        list_ids = [ObjectId(_id) for _id in ids]
+        return self.conn[coll].delete_many({"_id": {"$in": list_ids}})
+
     def insert_many(self, coll, insert_data):
         return self.conn[coll].insert_many(insert_data)
-    
+
     def drop(self, coll):
         return self.conn[coll].drop()
 
+    def find_user(self, coll, email):
+        return self.conn[coll].find_one({"email": email})

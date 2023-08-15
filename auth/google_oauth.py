@@ -2,7 +2,7 @@ import os
 
 import flask
 from authlib.client import OAuth2Session
-
+from data.data_center import MongoDBConn
 from .auth import Auth
 
 COOKIE_EXPIRY = 60 * 60 * 24 * 14
@@ -21,6 +21,10 @@ class GoogleAuth(Auth):
         Auth.__init__(self, app)
         app.server.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
         app.server.config['SESSION_TYPE'] = 'filesystem'
+        self.conn = MongoDBConn(
+            os.environ['CONNECTION_STRING'],
+            os.environ['DATABASE']
+        )
 
         @app.server.route('/login/callback')
         def callback():
@@ -97,6 +101,9 @@ class GoogleAuth(Auth):
             resp = google.get(os.environ.get('GOOGLE_AUTH_USER_INFO_URL'))
             if resp.status_code == 200:
                 user_data = resp.json()
+                user_id = self.conn.find_user("USER", user_data['email'])
+                if not user_id:
+                    return 'You are not authorized.'
                 r = flask.redirect(flask.session['REDIRECT_URL'])
                 r.set_cookie(COOKIE_AUTH_USER_NAME,
                              user_data['email'], max_age=COOKIE_EXPIRY)

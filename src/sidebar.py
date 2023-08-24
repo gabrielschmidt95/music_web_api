@@ -22,7 +22,14 @@ class Sidebar:
                         html.Div(id="media_totals"),
                         html.Hr()
                     ]
-                )
+                ),
+                dbc.Button(
+                    "Logout",
+                    id="logout",
+                    color="danger",
+                    className="me-1",
+                    style={"width": "100%"},
+                ),
             ],
             className="custom-sidebar"
         )
@@ -120,3 +127,12 @@ class Sidebar:
                 ],
                 className="g-2",
             )]
+
+        @app.callback(
+        Output('logout', 'children'),
+        Input('logout', 'n_clicks'),
+        prevent_initial_call=True
+        )
+        def update_output(n_clicks):
+            if n_clicks:
+                return dcc.Location(pathname="/logout", id="logout")

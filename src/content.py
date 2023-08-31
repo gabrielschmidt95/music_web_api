@@ -81,7 +81,8 @@ class Content:
             tracklist = row["DISCOGS"]["tracks"]
         else:
             tracklist = []
-
+        for url in row["DISCOGS"]["urls"]:
+            print(url)
         return dbc.Row([
             dbc.Col([
                 dbc.Row(html.Img(
@@ -100,10 +101,10 @@ class Content:
                                         className="bi bi-body-text",
                                         external_link=True,
                                         target="_blank"
-                                    )) for url in row["DISCOGS"]["urls"]
+                                    )) for url in row["DISCOGS"]["urls"] if "uri" in url
                                 ]),
                             ],
-                            title=f"ARTIGOS ENCONTRADOS: {row['DISCOGS']['len']}",
+                            title=f"ARTIGOS ENCONTRADOS: {row['DISCOGS']['len'] if 'len' in row['DISCOGS'] else 0}",
                         ),
                     ], start_collapsed=True,
                 ),

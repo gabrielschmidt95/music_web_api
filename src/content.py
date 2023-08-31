@@ -81,8 +81,7 @@ class Content:
             tracklist = row["DISCOGS"]["tracks"]
         else:
             tracklist = []
-        for url in row["DISCOGS"]["urls"]:
-            print(url)
+
         return dbc.Row([
             dbc.Col([
                 dbc.Row(html.Img(

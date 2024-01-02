@@ -6,31 +6,28 @@ from data.data_center import MongoDBConn
 from .auth import Auth
 
 COOKIE_EXPIRY = 60 * 60 * 24 * 14
-COOKIE_AUTH_USER_NAME = 'AUTH-USER'
-COOKIE_AUTH_ACCESS_TOKEN = 'AUTH-TOKEN'
+COOKIE_AUTH_USER_NAME = "AUTH-USER"
+COOKIE_AUTH_ACCESS_TOKEN = "AUTH-TOKEN"
 
-AUTH_STATE_KEY = 'auth_state'
+AUTH_STATE_KEY = "auth_state"
 
-CLIENT_ID = os.environ.get('GOOGLE_AUTH_CLIENT_ID')
-CLIENT_SECRET = os.environ.get('GOOGLE_AUTH_CLIENT_SECRET')
-AUTH_REDIRECT_URI = os.environ.get('GOOGLE_AUTH_REDIRECT_URI')
+CLIENT_ID = os.environ.get("GOOGLE_AUTH_CLIENT_ID")
+CLIENT_SECRET = os.environ.get("GOOGLE_AUTH_CLIENT_SECRET")
+AUTH_REDIRECT_URI = os.environ.get("GOOGLE_AUTH_REDIRECT_URI")
 
 
 class GoogleAuth(Auth):
     def __init__(self, app):
         Auth.__init__(self, app)
-        app.server.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
-        app.server.config['SESSION_TYPE'] = 'filesystem'
-        self.conn = MongoDBConn(
-            os.environ['CONNECTION_STRING'],
-            os.environ['DATABASE']
-        )
+        app.server.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY")
+        app.server.config["SESSION_TYPE"] = "filesystem"
+        self.conn = MongoDBConn(os.environ["CONNECTION_STRING"], os.environ["DATABASE"])
 
-        @app.server.route('/login/callback')
+        @app.server.route("/login/callback")
         def callback():
             return self.login_callback()
 
-        @app.server.route('/logout')
+        @app.server.route("/logout")
         def logout():
             return self.logout()
 
@@ -45,14 +42,13 @@ class GoogleAuth(Auth):
         session = OAuth2Session(
             CLIENT_ID,
             CLIENT_SECRET,
-            scope=os.environ.get('GOOGLE_AUTH_SCOPE'),
-            redirect_uri=AUTH_REDIRECT_URI
+            scope=os.environ.get("GOOGLE_AUTH_SCOPE"),
+            redirect_uri=AUTH_REDIRECT_URI,
         )
 
-        uri, state = session.create_authorization_url(
-            os.environ.get('GOOGLE_AUTH_URL'))
+        uri, state = session.create_authorization_url(os.environ.get("GOOGLE_AUTH_URL"))
 
-        flask.session['REDIRECT_URL'] = flask.request.url
+        flask.session["REDIRECT_URL"] = flask.request.url
         flask.session[AUTH_STATE_KEY] = state
         flask.session.permanent = True
 
@@ -78,52 +74,53 @@ class GoogleAuth(Auth):
         return wrap
 
     def login_callback(self):
-        if 'error' in flask.request.args:
-            if flask.request.args.get('error') == 'access_denied':
-                return 'You denied access.'
-            return 'Error encountered.'
-
-        if 'code' not in flask.request.args and 'state' not in flask.request.args:
+        if "error" in flask.request.args:
+            if flask.request.args.get("error") == "access_denied":
+                return "You denied access."
+            return "Error encountered."
+        print(flask.request.args)
+        if "code" not in flask.request.args and "state" not in flask.request.args:
             return self.login_request()
         else:
             # user is successfully authenticated
             google = self.__get_google_auth()
             try:
                 token = google.fetch_token(
-                    os.environ.get('GOOGLE_AUTH_TOKEN_URI'),
+                    os.environ.get("GOOGLE_AUTH_TOKEN_URI"),
                     client_secret=CLIENT_SECRET,
-                    authorization_response=flask.request.url
+                    authorization_response=flask.request.url,
                 )
             except Exception as e:
                 return e.__dict__
 
             google = self.__get_google_auth(token=token)
-            resp = google.get(os.environ.get('GOOGLE_AUTH_USER_INFO_URL'))
+            resp = google.get(os.environ["GOOGLE_AUTH_USER_INFO_URL"])
             if resp.status_code == 200:
                 user_data = resp.json()
-                user_id = self.conn.find_user("USER", user_data['email'])
+                user_id = self.conn.find_user("USER", user_data["email"])
                 if not user_id:
-                    return 'You are not authorized.'
-                r = flask.redirect(flask.session['REDIRECT_URL'])
-                r.set_cookie(COOKIE_AUTH_USER_NAME,
-                             user_data['email'], max_age=COOKIE_EXPIRY)
-                r.set_cookie(COOKIE_AUTH_ACCESS_TOKEN,
-                             token['access_token'], max_age=COOKIE_EXPIRY)
-                flask.session[user_data['email']] = token['access_token']
+                    return "You are not authorized."
+                r = flask.redirect(flask.session["REDIRECT_URL"])
+                r.set_cookie(
+                    COOKIE_AUTH_USER_NAME, user_data["email"], max_age=COOKIE_EXPIRY
+                )
+                if token:
+                    r.set_cookie(
+                        COOKIE_AUTH_ACCESS_TOKEN,
+                        token["access_token"],
+                        max_age=COOKIE_EXPIRY,
+                    )
+                    flask.session[user_data["email"]] = token["access_token"]
                 return r
 
-            return 'Could not fetch your information.'
+            return "Could not fetch your information."
 
     @staticmethod
     def __get_google_auth(state=None, token=None):
         if token:
             return OAuth2Session(CLIENT_ID, token=token)
         if state:
-            return OAuth2Session(
-                CLIENT_ID,
-                state=state,
-                redirect_uri=AUTH_REDIRECT_URI
-            )
+            return OAuth2Session(CLIENT_ID, state=state, redirect_uri=AUTH_REDIRECT_URI)
         return OAuth2Session(
             CLIENT_ID,
             redirect_uri=AUTH_REDIRECT_URI,
@@ -131,7 +128,7 @@ class GoogleAuth(Auth):
 
     @staticmethod
     def logout():
-        r = flask.redirect('/')
+        r = flask.redirect("/")
         r.delete_cookie(COOKIE_AUTH_USER_NAME)
         r.delete_cookie(COOKIE_AUTH_ACCESS_TOKEN)
         return r

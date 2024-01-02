@@ -1,13 +1,12 @@
 from dash import html, dcc
 from data.data_center import MongoDBConn
-from dotenv import load_dotenv
 from os import environ
 from server import app
 from src.sidebar import Sidebar
 from src.content import Content
 from src.modal import Data_Modal
 
-load_dotenv()
+
 
 
 class CollectionAPP:

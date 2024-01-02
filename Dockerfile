@@ -1,8 +1,9 @@
 # Builder stage
-FROM python:3.11.2-slim as builder
+FROM python:3.11.2-slim AS builder
 
 RUN apt-get update && \
-    apt-get install -y musl-dev libpq-dev gcc && \
+    apt-get install -y musl-dev libpq-dev gcc tk-dev && \
+    apt-get clean && \
     python -m venv /opt/venv
 
 ENV PATH="/opt/venv/bin:$PATH"

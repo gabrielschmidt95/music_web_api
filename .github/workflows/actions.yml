@@ -28,4 +28,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/my-docker-image:${{ github.sha }}
+          tags: ghcr.io/${{ github.repository_owner }}/music-app:${{ github.sha }}

@@ -12,5 +12,4 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTS
 
 app.title = "Music Collection"
 
-if environ["DASH_DEBUG_MODE"] == True:
-    auth = GoogleAuth(app)
+auth = GoogleAuth(app)

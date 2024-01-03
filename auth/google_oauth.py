@@ -23,6 +23,10 @@ class GoogleAuth(Auth):
         app.server.config["SESSION_TYPE"] = "filesystem"
         self.conn = MongoDBConn(os.environ["CONNECTION_STRING"], os.environ["DATABASE"])
 
+        @app.server.route("/ping")
+        def ping():
+            return "{status: ok}"
+
         @app.server.route("/login/callback")
         def callback():
             return self.login_callback()

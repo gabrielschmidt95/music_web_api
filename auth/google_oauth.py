@@ -103,6 +103,14 @@ class GoogleAuth(Auth):
                 user_data = resp.json()
                 user_id = self.conn.find_user("USER", user_data["email"])
                 if not user_id:
+                    print("User not authorized",user_data)
+                    self.conn.insert_one(
+                        "USER_LOGS",
+                        {
+                            "Type": "Not Authorized",
+                            "user_data": user_data,
+                        },
+                    )
                     return "You are not authorized."
                 r = flask.redirect(flask.session["REDIRECT_URL"])
                 r.set_cookie(

@@ -2,10 +2,9 @@ import os
 
 import flask
 from authlib.client import OAuth2Session
-
 from data.data_center import MongoDBConn
-
 from .auth import Auth
+import logging
 
 COOKIE_EXPIRY = 60 * 60 * 24 * 14
 COOKIE_AUTH_USER_NAME = "AUTH-USER"
@@ -84,7 +83,7 @@ class GoogleAuth(Auth):
             if flask.request.args.get("error") == "access_denied":
                 return "You denied access."
             return "Error encountered."
-        print(flask.request.args)
+        logging.INFO(flask.request.args)
         if "code" not in flask.request.args and "state" not in flask.request.args:
             return self.login_request()
         else:
@@ -105,7 +104,7 @@ class GoogleAuth(Auth):
                 user_data = resp.json()
                 user_id = self.conn.find_user("USER", user_data["email"])
                 if not user_id:
-                    print("User not authorized",user_data)
+                    logging.INFO("User not authorized",user_data)
                     self.conn.insert_one(
                         "USER_LOGS",
                         {
@@ -117,6 +116,9 @@ class GoogleAuth(Auth):
                 r = flask.redirect(flask.session["REDIRECT_URL"])
                 r.set_cookie(
                     COOKIE_AUTH_USER_NAME, user_data["email"], max_age=COOKIE_EXPIRY
+                )
+                r.set_cookie(
+                    "AUTH-USER-IMAGE", user_data["picture"], max_age=COOKIE_EXPIRY
                 )
                 if token:
                     r.set_cookie(

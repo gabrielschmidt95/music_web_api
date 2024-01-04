@@ -15,6 +15,7 @@ from spotipy.oauth2 import SpotifyClientCredentials
 
 from server import app
 from src.track import Track
+import flask
 
 
 class Content:
@@ -23,7 +24,7 @@ class Content:
         self.MAX_INDEX = 3
         self.track = Track(self.conn)
         self.discogs_url = "https://api.discogs.com/database/search"
-    
+
     def get_album_for_artist(self, artist, album):
         sp = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials())
         results = sp.search(q="artist:" + artist + " album:" + album, type="album")
@@ -228,6 +229,13 @@ class Content:
                                         outline=True,
                                         id="insert_btn",
                                     ),
+                                    dbc.Label(
+                                        style={
+                                            "margin-top": "0.5rem",
+                                            "margin-left": "2rem",
+                                        },
+                                        id="user_label",
+                                    ),
                                 ],
                                 style={"width": "100%"},
                             ),
@@ -374,19 +382,32 @@ class Content:
         @app.callback(
             Output("disco", "children"),
             Output("filter_contents", "data"),
+            Output("user_label", "children"),
             Input({"type": "filter-dropdown", "index": ALL}, "value"),
             Input("df", "data"),
             Input("url", "pathname"),
             State("filter_contents", "data"),
             prevent_initial_call=True,
         )
-        def update_output(value, _, url, _filter):
+        def update_output(value, _, url, _filter, request=flask.request):
+            if "AUTH-USER" in request.cookies and "AUTH-USER-IMAGE" in request.cookies:
+                user = [
+                    html.Img(
+                        src=request.cookies["AUTH-USER-IMAGE"],
+                        width="30px",
+                        style={"border-radius": "50%"},
+                    ),
+                    f' {request.cookies["AUTH-USER"]}',
+                ]
+            else:
+                user = " No User"
+
             cxt = callback_context.triggered
             if not any(value):
                 if cxt[0]["value"] == None:
                     try:
                         _filter.pop(loads(cxt[0]["prop_id"].split(".")[0])["index"])
-                    except:
+                    except Exception:
                         pass
                 welcome = dbc.Alert(
                     [
@@ -400,7 +421,7 @@ class Content:
                         "border-color": "#0d6efd",
                     },
                 )
-                return welcome, _filter
+                return welcome, _filter, user
             else:
                 if cxt[0]["prop_id"].split(".")[0] not in ["df"]:
                     _filter_index = loads(cxt[0]["prop_id"].split(".")[0])["index"]
@@ -425,7 +446,7 @@ class Content:
                         ],
                         style={"margin-top": "1rem"},
                     )
-                    return warning, _filter
+                    return warning, _filter, user
                 df = df.query(_query).groupby("ARTIST", as_index=False)
             accord = dbc.Accordion(
                 [
@@ -559,7 +580,7 @@ class Content:
                 ],
                 start_collapsed=True,
             )
-            return accord, _filter
+            return accord, _filter, user
 
         @app.callback(
             Output("upload_alert", "children"),

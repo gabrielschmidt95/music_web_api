@@ -41,7 +41,7 @@ class CollectionAPP:
         self.content.callbacks()
 
     def run(self):
-        app.run_server(debug=True, port=5000)
+        app.run_server(debug=True, port=8050)
 
 
 if __name__ == '__main__':

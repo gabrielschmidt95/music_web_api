@@ -1,8 +1,6 @@
-from turtle import st
 from dash import html, dcc, Input, Output, State, callback_context, ALL
 import dash_bootstrap_components as dbc
 import plotly.express as px
-from pyparsing import col
 from src.track import Track
 from server import app
 from json import loads
@@ -14,7 +12,8 @@ import pandera as pa
 import pandas as pd
 import numpy as np
 import base64
-
+import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
 
 class Content:
     def __init__(self, conn):
@@ -22,6 +21,18 @@ class Content:
         self.MAX_INDEX = 3
         self.track = Track(self.conn)
         self.discogs_url = "https://api.discogs.com/database/search"
+    
+    def get_album_for_artist(self, artist, album):
+        sp = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials())
+        results = sp.search(q="artist:" + artist + " album:" + album, type="album")
+        if results:
+            items = results["albums"]["items"]
+            if len(items) > 0:
+                return items
+            else:
+                return None
+        else:
+            return None
 
     def discogs_get_url(self, row):
         if (
@@ -101,7 +112,21 @@ class Content:
                 color="success",
             )
         else:
-            spotify = html.Div()
+            spotify_get = self.get_album_for_artist(row["ARTIST"], row["TITLE"])
+            if spotify_get:
+                row["SPOTIFY"] = spotify_get[0]
+                self.conn.replace_one("CD", row["_id"], row)
+                spotify = dbc.Button(
+                    f' SPOTIFY - {row["SPOTIFY"]["name"]}',
+                    href=row["SPOTIFY"]["external_urls"]["spotify"],
+                    className="bi bi-music-note-beamed",
+                    external_link=True,
+                    target="_blank",
+                    style={"margin-bottom": "1rem"},
+                    color="success",
+                )
+            else:
+                spotify = html.Div()
 
         return dbc.Row(
             [

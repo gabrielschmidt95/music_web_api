@@ -1,4 +1,4 @@
-from dash import html, Input, Output, State, dash_table
+from dash import html, Input, Output, State
 import dash_bootstrap_components as dbc
 from server import app
 from time import sleep

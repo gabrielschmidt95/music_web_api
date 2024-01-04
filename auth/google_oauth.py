@@ -18,11 +18,12 @@ AUTH_REDIRECT_URI = os.environ.get("GOOGLE_AUTH_REDIRECT_URI")
 
 
 class GoogleAuth(Auth):
-    def __init__(self, app):
+    def __init__(self, app, logger=logging.getLogger(__name__)):
         Auth.__init__(self, app)
         app.server.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY")
         app.server.config["SESSION_TYPE"] = "filesystem"
         self.conn = MongoDBConn(os.environ["CONNECTION_STRING"], os.environ["DATABASE"])
+        self.logger = logger
 
         @app.server.route("/ping")
         def ping():
@@ -83,7 +84,7 @@ class GoogleAuth(Auth):
             if flask.request.args.get("error") == "access_denied":
                 return "You denied access."
             return "Error encountered."
-        logging.INFO(flask.request.args)
+        self.logger.info(flask.request.args)
         if "code" not in flask.request.args and "state" not in flask.request.args:
             return self.login_request()
         else:
@@ -104,7 +105,7 @@ class GoogleAuth(Auth):
                 user_data = resp.json()
                 user_id = self.conn.find_user("USER", user_data["email"])
                 if not user_id:
-                    logging.INFO("User not authorized",user_data)
+                    self.logger.info("User not authorized", user_data)
                     self.conn.insert_one(
                         "USER_LOGS",
                         {

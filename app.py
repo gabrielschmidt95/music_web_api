@@ -1,12 +1,12 @@
-from dash import html, dcc
-from data.data_center import MongoDBConn
 from os import environ
+
+from dash import dcc, html
+
+from data.data_center import MongoDBConn
 from server import app
-from src.sidebar import Sidebar
 from src.content import Content
 from src.modal import Data_Modal
-
-
+from src.sidebar import Sidebar
 
 
 class CollectionAPP:

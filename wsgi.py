@@ -1,5 +1,5 @@
-from server import app
 from app import CollectionAPP
+from server import app
 
 collection = CollectionAPP()
 

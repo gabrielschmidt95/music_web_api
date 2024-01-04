@@ -1,8 +1,11 @@
-from dash import dcc, Input, Output, State, callback_context, ALL, html, no_update
-import dash_bootstrap_components as dbc
-from datetime import datetime, date
-from server import app
+from datetime import date, datetime
 from json import loads
+
+import dash_bootstrap_components as dbc
+from dash import (ALL, Input, Output, State, callback_context, dcc, html,
+                  no_update)
+
+from server import app
 
 
 class Data_Modal:

@@ -1,6 +1,8 @@
 from __future__ import absolute_import
+
 from abc import ABCMeta, abstractmethod
-from six import iteritems, add_metaclass
+
+from six import add_metaclass, iteritems
 
 
 @add_metaclass(ABCMeta)

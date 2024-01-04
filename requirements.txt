@@ -1,4 +1,4 @@
-﻿dash
+dash
 dash-bootstrap-components
 dash-core-components
 dash-html-components
@@ -15,4 +15,5 @@ requests
 Sphinx
 waitress
 gunicorn
+pyparsing
 spotipy

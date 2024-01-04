@@ -1,8 +1,10 @@
-from dash import html, Input, Output, State
-import dash_bootstrap_components as dbc
-from server import app
 from time import sleep
+
+import dash_bootstrap_components as dbc
 import requests
+from dash import Input, Output, State, html
+
+from server import app
 
 
 class Track:

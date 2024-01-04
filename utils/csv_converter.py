@@ -1,5 +1,7 @@
-import pandas as pd
 import argparse
+
+import pandas as pd
+
 
 class ConvertCSV():
     def __init__(self, file):

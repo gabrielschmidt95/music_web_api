@@ -1,8 +1,10 @@
-import dash_bootstrap_components as dbc
-from auth.google_oauth import GoogleAuth
-from dash import Dash
 from os import environ
+
+import dash_bootstrap_components as dbc
+from dash import Dash
 from dotenv import load_dotenv
+
+from auth.google_oauth import GoogleAuth
 
 load_dotenv()
 

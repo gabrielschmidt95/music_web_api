@@ -1,19 +1,21 @@
-from dash import html, dcc, Input, Output, State, callback_context, ALL
-import dash_bootstrap_components as dbc
-import plotly.express as px
-from src.track import Track
-from server import app
+import base64
+from io import BytesIO, StringIO
 from json import loads
 from os import environ
-import requests
-from io import StringIO, BytesIO
-from server import app
-import pandera as pa
-import pandas as pd
+
+import dash_bootstrap_components as dbc
 import numpy as np
-import base64
+import pandas as pd
+import pandera as pa
+import plotly.express as px
+import requests
 import spotipy
+from dash import ALL, Input, Output, State, callback_context, dcc, html
 from spotipy.oauth2 import SpotifyClientCredentials
+
+from server import app
+from src.track import Track
+
 
 class Content:
     def __init__(self, conn):

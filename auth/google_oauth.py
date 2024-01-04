@@ -2,7 +2,9 @@ import os
 
 import flask
 from authlib.client import OAuth2Session
+
 from data.data_center import MongoDBConn
+
 from .auth import Auth
 
 COOKIE_EXPIRY = 60 * 60 * 24 * 14

@@ -2,23 +2,18 @@ from os import environ
 
 from dash import dcc, html
 
-from data.data_center import MongoDBConn
 from server import app
 from src.content import Content
-from src.modal import Data_Modal
+from src.modal import DataModal
 from src.sidebar import Sidebar
 
 
 class CollectionAPP:
 
     def __init__(self):
-        self.conn = MongoDBConn(
-            environ['CONNECTION_STRING'],
-            environ['DATABASE']
-        )
-        self.sidebar = Sidebar(self.conn)
-        self.data_modal = Data_Modal(self.conn)
-        self.content = Content(self.conn)
+        self.sidebar = Sidebar()
+        self.data_modal = DataModal()
+        self.content = Content()
         self.create_layout()
         self.create_callbacks()
 

@@ -2,9 +2,9 @@ import os
 
 import flask
 from authlib.client import OAuth2Session
-from data.data_center import MongoDBConn
 from .auth import Auth
 import logging
+import requests
 
 COOKIE_EXPIRY = 60 * 60 * 24 * 14
 COOKIE_AUTH_USER_NAME = "AUTH-USER"
@@ -22,8 +22,12 @@ class GoogleAuth(Auth):
         Auth.__init__(self, app)
         app.server.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY")
         app.server.config["SESSION_TYPE"] = "filesystem"
-        self.conn = MongoDBConn(os.environ["CONNECTION_STRING"], os.environ["DATABASE"])
         self.logger = logger
+        self.headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": "Bearer " + os.environ["DB_TOKEN"],
+        }
 
         @app.server.route("/ping")
         def ping():
@@ -103,15 +107,17 @@ class GoogleAuth(Auth):
             resp = google.get(os.environ["GOOGLE_AUTH_USER_INFO_URL"])
             if resp.status_code == 200:
                 user_data = resp.json()
-                user_id = self.conn.find_user("USER", user_data["email"])
+                user_id = requests.get(
+                    os.environ["DB_API"] + "user",
+                    headers=self.headers,
+                    json={"user": user_data["email"]},
+                ).json()
                 if not user_id:
                     self.logger.info("User not authorized", user_data)
-                    self.conn.insert_one(
-                        "USER_LOGS",
-                        {
-                            "Type": "Not Authorized",
-                            "user_data": user_data,
-                        },
+                    requests.post(
+                        os.environ["DB_API"] + "logs",
+                        headers=self.headers,
+                        json={"log": user_data, "type": "Not Authorized"},
                     )
                     return "You are not authorized."
                 r = flask.redirect(flask.session["REDIRECT_URL"])

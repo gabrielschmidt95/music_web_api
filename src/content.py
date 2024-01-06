@@ -347,21 +347,39 @@ class Content:
         def display_click_data(clickData):
             if clickData:
                 year_selected = requests.post(
-                    environ["DB_API"] + "album/year/",
+                    environ["DB_API"] + "album/year",
                     headers=self.headers,
                     json={
                         "year": int(clickData["points"][0]["x"]),
-                        "metric": "purchase"
+                        "metric": "purchase",
                     },
                 ).json()
                 df = pd.DataFrame().from_dict(year_selected)
                 table_header = [
-                    html.Thead(html.Tr([html.Th("ARTIST"), html.Th("TITLE"),html.Th("COMPRA")]))
+                    html.Thead(
+                        html.Th(
+                            clickData["points"][0]["x"],
+                            colSpan="3",
+                            className="table-active",
+                            style={"text-align": "center", "font-size": "1.5rem"},
+                        )
+                    ),
+                    html.Thead(
+                        html.Tr(
+                            [html.Th("ARTIST"), html.Th("TITLE"), html.Th("COMPRA")]
+                        )
+                    ),
                 ]
                 table_body = [
                     html.Tbody(
                         [
-                            html.Tr([html.Td(row["artist"]), html.Td(row["title"]),html.Td(row["purchase"])])
+                            html.Tr(
+                                [
+                                    html.Td(row["artist"]),
+                                    html.Td(row["title"]),
+                                    html.Td(row["purchase"]),
+                                ]
+                            )
                             for row in df.to_dict("records")
                         ]
                     )
@@ -376,16 +394,26 @@ class Content:
         def display_click_data(clickData):
             if clickData:
                 year_selected = requests.post(
-                    environ["DB_API"] + "album/year/",
+                    environ["DB_API"] + "album/year",
                     headers=self.headers,
                     json={
                         "year": int(clickData["points"][0]["x"]),
-                        "metric": "release_year"
+                        "metric": "release_year",
                     },
                 ).json()
                 df = pd.DataFrame().from_dict(year_selected)
                 table_header = [
-                    html.Thead(html.Tr([html.Th("ARTIST"), html.Th("TITLE"),html.Th("MEDIA")]))
+                    html.Thead(
+                        html.Th(
+                            clickData["points"][0]["x"],
+                            colSpan="3",
+                            className="table-active",
+                            style={"text-align": "center", "font-size": "1.5rem"},
+                        )
+                    ),
+                    html.Thead(
+                        html.Tr([html.Th("ARTIST"), html.Th("TITLE"), html.Th("MEDIA")])
+                    )
                 ]
                 table_body = [
                     html.Tbody(
@@ -485,7 +513,7 @@ class Content:
                 n_dct = {}
                 for v in df:
                     if v["artist"] not in n_dct:
-                        n_dct[v["artist"]]  = []
+                        n_dct[v["artist"]] = []
                     n_dct[v["artist"]].append(v)
 
                 if len(df) > 50:
@@ -503,130 +531,133 @@ class Content:
                     )
                     return warning, _filter, user
             accord = dbc.Accordion(
-                [dbc.AccordionItem(
-                    [
-                        dbc.Accordion(
-                            [
-                                dbc.AccordionItem(
-                                    [
-                                        html.H4(
-                                            f' {row["title"]}',
-                                            className="card-title bi bi-book",
-                                        ),
-                                        html.H5(
-                                            f' {row["artist"]}',
-                                            className="card-title bi bi-person",
-                                        ),
-                                        dbc.Row(
-                                            [
-                                                dbc.Col(
-                                                    dbc.ListGroup(
-                                                        [
-                                                            dbc.ListGroupItem(
-                                                                f' ANO DE LANÇAMENTO: {row["releaseYear"] if row["releaseYear"] is not None else ""}',
-                                                                className="bi bi-calendar-event",
-                                                            ),
-                                                            dbc.ListGroupItem(
-                                                                f' ANO DA EDIÇÃO: {int(row["editionYear"]) if row["editionYear"] is not None else ""}',
-                                                                className="bi bi-calendar-event",
-                                                            ),
-                                                            dbc.ListGroupItem(
-                                                                f' MEDIA: {row["media"] if row["media"] is not None else ""}',
-                                                                className="bi bi-vinyl",
-                                                            ),
-                                                            dbc.ListGroupItem(
-                                                                f' AQUISIÇÃO: {row["purchase"] if row["purchase"] is not None else "" }',
-                                                                className="bi bi-cart3",
-                                                            ),
-                                                        ]
-                                                    ),
-                                                    width=4,
-                                                ),
-                                                dbc.Col(
-                                                    dbc.ListGroup(
-                                                        [
-                                                            dbc.ListGroupItem(
-                                                                f' ORIGEM: {row["origin"]  if row["origin"] is not None else "" }',
-                                                                className="bi bi-house",
-                                                            ),
-                                                            dbc.ListGroupItem(
-                                                                f' IFPI MASTERING: {row["ifpiMastering"]  if row["ifpiMastering"] is not None else "" }',
-                                                                className="bi bi-body-text",
-                                                            ),
-                                                            dbc.ListGroupItem(
-                                                                f' IFPI MOULD: {row["ifpiMould"]  if row["ifpiMould"] is not None else "" }',
-                                                                className="bi bi-body-text",
-                                                            ),
-                                                        ]
-                                                    ),
-                                                    width=4,
-                                                ),
-                                                dbc.Col(
-                                                    dbc.ListGroup(
-                                                        [
-                                                            dbc.ListGroupItem(
-                                                                f' CÓDIGO DE BARRAS: {row["barcode"] if row["barcode"] is not None else "" }',
-                                                                className="bi bi-body-text",
-                                                            ),
-                                                            dbc.ListGroupItem(
-                                                                f' MATRIZ: {row["matriz"]  if row["matriz"] is not None else "" }',
-                                                                className="bi bi-body-text",
-                                                            ),
-                                                            dbc.ListGroupItem(
-                                                                f' LOTE: {row["lote"] if row["lote"] is not None else "" }',
-                                                                className="bi bi-body-text",
-                                                            ),
-                                                        ]
-                                                    ),
-                                                    width=4,
-                                                ),
-                                            ],
-                                            align="start",
-                                        ),
-                                        dbc.Row(
-                                            dbc.Col(
+                [
+                    dbc.AccordionItem(
+                        [
+                            dbc.Accordion(
+                                [
+                                    dbc.AccordionItem(
+                                        [
+                                            html.H4(
+                                                f' {row["title"]}',
+                                                className="card-title bi bi-book",
+                                            ),
+                                            html.H5(
+                                                f' {row["artist"]}',
+                                                className="card-title bi bi-person",
+                                            ),
+                                            dbc.Row(
                                                 [
-                                                    dbc.Button(
-                                                        html.I(
-                                                            className="bi bi-pencil-fill"
+                                                    dbc.Col(
+                                                        dbc.ListGroup(
+                                                            [
+                                                                dbc.ListGroupItem(
+                                                                    f' ANO DE LANÇAMENTO: {row["releaseYear"] if row["releaseYear"] is not None else ""}',
+                                                                    className="bi bi-calendar-event",
+                                                                ),
+                                                                dbc.ListGroupItem(
+                                                                    f' ANO DA EDIÇÃO: {int(row["editionYear"]) if row["editionYear"] is not None else ""}',
+                                                                    className="bi bi-calendar-event",
+                                                                ),
+                                                                dbc.ListGroupItem(
+                                                                    f' MEDIA: {row["media"] if row["media"] is not None else ""}',
+                                                                    className="bi bi-vinyl",
+                                                                ),
+                                                                dbc.ListGroupItem(
+                                                                    f' AQUISIÇÃO: {row["purchase"] if row["purchase"] is not None else "" }',
+                                                                    className="bi bi-cart3",
+                                                                ),
+                                                            ]
                                                         ),
-                                                        color="warning",
-                                                        outline=True,
-                                                        className="me-1",
-                                                        id={
-                                                            "type": "edit_button",
-                                                            "index": f"{row['id']}",
-                                                        },
+                                                        width=4,
                                                     ),
-                                                    dbc.Button(
-                                                        html.I(
-                                                            className="bi bi-trash2-fill"
+                                                    dbc.Col(
+                                                        dbc.ListGroup(
+                                                            [
+                                                                dbc.ListGroupItem(
+                                                                    f' ORIGEM: {row["origin"]  if row["origin"] is not None else "" }',
+                                                                    className="bi bi-house",
+                                                                ),
+                                                                dbc.ListGroupItem(
+                                                                    f' IFPI MASTERING: {row["ifpiMastering"]  if row["ifpiMastering"] is not None else "" }',
+                                                                    className="bi bi-body-text",
+                                                                ),
+                                                                dbc.ListGroupItem(
+                                                                    f' IFPI MOULD: {row["ifpiMould"]  if row["ifpiMould"] is not None else "" }',
+                                                                    className="bi bi-body-text",
+                                                                ),
+                                                            ]
                                                         ),
-                                                        color="danger",
-                                                        outline=True,
-                                                        className="me-1",
-                                                        id={
-                                                            "type": "delete_button",
-                                                            "index": f"{row['id']}",
-                                                        },
+                                                        width=4,
+                                                    ),
+                                                    dbc.Col(
+                                                        dbc.ListGroup(
+                                                            [
+                                                                dbc.ListGroupItem(
+                                                                    f' CÓDIGO DE BARRAS: {row["barcode"] if row["barcode"] is not None else "" }',
+                                                                    className="bi bi-body-text",
+                                                                ),
+                                                                dbc.ListGroupItem(
+                                                                    f' MATRIZ: {row["matriz"]  if row["matriz"] is not None else "" }',
+                                                                    className="bi bi-body-text",
+                                                                ),
+                                                                dbc.ListGroupItem(
+                                                                    f' LOTE: {row["lote"] if row["lote"] is not None else "" }',
+                                                                    className="bi bi-body-text",
+                                                                ),
+                                                            ]
+                                                        ),
+                                                        width=4,
                                                     ),
                                                 ],
-                                                width=2,
+                                                align="start",
                                             ),
-                                            justify="end",
-                                        ),
-                                        html.Hr(),
-                                        self.discogs_get_url(row),
-                                    ],
-                                    title=f'{int(row["releaseYear"]) if row["releaseYear"] is not None else ""} - {row["title"]}',
-                                )
-                                for row in value
-                            ],
-                            start_collapsed=True,
-                        )
-                    ],
-                    title=key,
-                ) for key,value in n_dct.items()],
+                                            dbc.Row(
+                                                dbc.Col(
+                                                    [
+                                                        dbc.Button(
+                                                            html.I(
+                                                                className="bi bi-pencil-fill"
+                                                            ),
+                                                            color="warning",
+                                                            outline=True,
+                                                            className="me-1",
+                                                            id={
+                                                                "type": "edit_button",
+                                                                "index": f"{row['id']}",
+                                                            },
+                                                        ),
+                                                        dbc.Button(
+                                                            html.I(
+                                                                className="bi bi-trash2-fill"
+                                                            ),
+                                                            color="danger",
+                                                            outline=True,
+                                                            className="me-1",
+                                                            id={
+                                                                "type": "delete_button",
+                                                                "index": f"{row['id']}",
+                                                            },
+                                                        ),
+                                                    ],
+                                                    width=2,
+                                                ),
+                                                justify="end",
+                                            ),
+                                            html.Hr(),
+                                            self.discogs_get_url(row),
+                                        ],
+                                        title=f'{int(row["releaseYear"]) if row["releaseYear"] is not None else ""} - {row["title"]}',
+                                    )
+                                    for row in value
+                                ],
+                                start_collapsed=True,
+                            )
+                        ],
+                        title=key,
+                    )
+                    for key, value in n_dct.items()
+                ],
                 start_collapsed=True,
             )
             return accord, _filter, user
@@ -734,7 +765,7 @@ class Content:
                 raise ValueError()
             else:
                 all_data = requests.get(
-                environ["DB_API"] + "all", headers=self.headers
+                    environ["DB_API"] + "all", headers=self.headers
                 ).json()
                 df = pd.DataFrame().from_dict(all_data)
                 df = df.drop("id", axis=1)

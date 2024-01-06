@@ -14,7 +14,7 @@ class DataModal:
         self.headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "Authorization": "Bearer " + environ["DB_TOKEN"],
+            "Authorization": "Bearer " + environ["OAUTH_TOKEN"],
         }
         self.medias = requests.get(
             environ["DB_API"] + "medias", headers=self.headers

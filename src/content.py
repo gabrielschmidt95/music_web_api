@@ -24,7 +24,7 @@ class Content:
         self.headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "Authorization": "Bearer " + environ["DB_TOKEN"],
+            "Authorization": "Bearer " + environ["OAUTH_TOKEN"],
         }
 
     def get_album_for_artist(self, artist, album):

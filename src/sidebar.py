@@ -10,7 +10,7 @@ class Sidebar:
         self.headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "Authorization": "Bearer " + os.environ["DB_TOKEN"],
+            "Authorization": "Bearer " + os.environ["OAUTH_TOKEN"],
         }
 
     def layout(self):

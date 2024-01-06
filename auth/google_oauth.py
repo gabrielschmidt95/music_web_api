@@ -26,7 +26,7 @@ class GoogleAuth(Auth):
         self.headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "Authorization": "Bearer " + os.environ["DB_TOKEN"],
+            "Authorization": "Bearer " + os.environ["OAUTH_TOKEN"],
         }
 
         @app.server.route("/ping")

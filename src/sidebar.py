@@ -3,7 +3,7 @@ from dash import Input, Output, dcc, html
 from server import app
 import requests
 import os
-
+from auth.token import get_token
 
 class Sidebar:
     def __init__(self):
@@ -70,6 +70,7 @@ class Sidebar:
             prevent_initial_call=True,
         )
         def toggle_modal(_filter, _):
+            get_token()
             artist = requests.get(
                 os.environ["DB_API"] + "artists", headers=self.headers
             ).json()

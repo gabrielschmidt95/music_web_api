@@ -19,10 +19,11 @@ import flask
 
 CLICK_MODE = "event+select"
 BI_TEXT = "bi bi-body-text"
+UPDATE_ENDPOINT = "update/album"
 
 
 class Content:
-    def __init__(self):
+    def __init__(self) -> None:
         self.MAX_INDEX = 3
         self.api = DBApi()
 
@@ -38,52 +39,7 @@ class Content:
         else:
             return []
 
-    def discogs_get_url(self, row) -> html.Div:
-        if "discogs" not in row or row["discogs"] is None or row["discogs"]["id"] == 0:
-            if row["discogs"]["type"] == "NOT_FOUND":
-                return html.Div("Nao encontrado no Discogs")
-
-            params = get_params(row)
-
-            resp = get_discogs(row)
-
-            if resp:
-                result = resp.json()
-                if "results" not in result:
-                    return html.Div("Nao encontrado no Discogs")
-
-                result = result["results"]
-
-                if len(result) == 0:
-                    result = try_get_discogs(params)
-
-                if len(result) > 0:
-                    row["discogs"] = result[0]
-                    row["discogs"]["urls"] = [
-                        {"id": r["id"], "uri": r["uri"]} for r in result
-                    ]
-                    row["discogs"]["len"] = len(result)
-                    _id = row["discogs"]["id"]
-                    _type = row["discogs"]["type"]
-                    tracks = get_tracks(_type, _id)
-                    if tracks:
-                        row["discogs"].update(tracks=tracks)
-
-                    result = self.api.post("update/album", row)
-
-                    print("ID", result["Message"])
-                else:
-                    row["discogs"] = {"type": "NOT_FOUND"}
-                    self.api.post("update/album", row)
-                    return html.Div("Nao encontrado no Discogs")
-            else:
-                return html.Div(f"Error:{resp.status_code}")
-
-        if "tracks" in row["discogs"] and row["discogs"]["tracks"]:
-            tracklist = row["discogs"]["tracks"]
-        else:
-            tracklist = []
-
+    def get_spotify(self, row) -> html.Div:
         if row["spotify"]["name"] == "NOT_FOUND":
             spotify = html.Div("Nao encontrado no Spotify")
         elif "spotify" in row and row["spotify"]["name"]:
@@ -102,7 +58,7 @@ class Content:
             if spotify_get:
                 row["spotify"] = spotify_get[0]
 
-                self.api.post("update/album", row)
+                self.api.post(UPDATE_ENDPOINT, row)
 
                 spotify = dbc.Button(
                     f' SPOTIFY - {row["spotify"]["name"]}',
@@ -116,24 +72,98 @@ class Content:
             else:
                 row["spotify"] = {"name": "NOT_FOUND"}
 
-                self.api.post("update/album", row)
+                self.api.post(UPDATE_ENDPOINT, row)
                 spotify = html.Div("Nao encontrado no Spotify")
 
-        if not row["discogs"]["urls"]:
-            row["discogs"]["urls"] = []
+        return spotify
 
+    def get_image(self, cover_image) -> html.Div:
+        return dbc.Col(
+            [
+                dbc.Row(
+                    html.Img(src=cover_image),
+                    justify="center",
+                )
+            ],
+            width=4,
+            align="center",
+        )
+
+    def return_no_discogs(self, row) -> html.Div:
+        # load cover image from assets
+        cover_image = f"/assets/no_image_available.png"
         return dbc.Row(
             [
+                self.get_image(cover_image),
                 dbc.Col(
                     [
-                        dbc.Row(
-                            html.Img(src=row["discogs"]["cover_image"]),
-                            justify="center",
-                        )
+                        self.get_spotify(row),
+                        html.Div("Nao encontrado no Discogs"),
                     ],
                     width=4,
                     align="center",
                 ),
+            ]
+        )
+
+    def get_tracklist(self, row) -> list:
+        if "tracks" in row["discogs"] and row["discogs"]["tracks"]:
+            tracklist = row["discogs"]["tracks"]
+        else:
+            tracklist = []
+
+        return tracklist
+
+    def discogs_get_url(self, row) -> html.Div:
+        if "discogs" not in row or row["discogs"] is None or row["discogs"]["id"] == 0:
+            if row["discogs"]["type"] == "NOT_FOUND":
+                return self.return_no_discogs(row)
+
+            params = get_params(row)
+
+            resp = get_discogs(row)
+
+            if resp:
+                result = resp.json()
+                if "results" not in result:
+                    return self.return_no_discogs(row)
+
+                result = result["results"]
+
+                if len(result) == 0:
+                    result = try_get_discogs(params)
+
+                if len(result) == 0:
+                    row["discogs"] = {"type": "NOT_FOUND"}
+                    self.api.post(UPDATE_ENDPOINT, row)
+                    return self.return_no_discogs(row)
+                
+                row["discogs"] = result[0]
+                row["discogs"]["urls"] = [
+                    {"id": r["id"], "uri": r["uri"]} for r in result
+                ]
+                row["discogs"]["len"] = len(result)
+                _id = row["discogs"]["id"]
+                _type = row["discogs"]["type"]
+                tracks = get_tracks(_type, _id)
+                if tracks:
+                    row["discogs"].update(tracks=tracks)
+
+                result = self.api.post(UPDATE_ENDPOINT, row)
+
+                print("ID", result["Message"])
+                
+            else:
+                return html.Div(f"Error:{resp.status_code}")
+
+        if not row["discogs"]["urls"]:
+            row["discogs"]["urls"] = []
+
+        spotify = self.get_spotify(row)
+
+        return dbc.Row(
+            [
+                self.get_image(row["discogs"]["cover_image"]),
                 dbc.Col(
                     [
                         spotify,
@@ -170,7 +200,7 @@ class Content:
                                                 dbc.ListGroupItem(
                                                     f'{t["position"]} - {t["title"]}'
                                                 )
-                                                for t in tracklist
+                                                for t in self.get_tracklist(row)
                                             ]
                                         )
                                     ],
@@ -185,8 +215,7 @@ class Content:
             ]
         )
 
-    def layout(self):
-        print("Content Layout")
+    def layout(self) -> html.Div:
         return html.Div(
             [
                 dcc.Download(id="download_xlsx"),

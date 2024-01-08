@@ -4,7 +4,8 @@ import flask
 from authlib.client import OAuth2Session
 from .auth import Auth
 import logging
-import requests
+
+from api.db_api import DBApi
 
 COOKIE_EXPIRY = 60 * 60 * 24 * 14
 COOKIE_AUTH_USER_NAME = "AUTH-USER"
@@ -23,11 +24,7 @@ class GoogleAuth(Auth):
         app.server.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY")
         app.server.config["SESSION_TYPE"] = "filesystem"
         self.logger = logger
-        self.headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Authorization": "Bearer " + os.environ["OAUTH_TOKEN"],
-        }
+        self.api = DBApi()
 
         @app.server.route("/ping")
         def ping():
@@ -83,6 +80,27 @@ class GoogleAuth(Auth):
 
         return wrap
 
+    def authorize(self, resp, token):
+        user_data = resp.json()
+        user_id = self.api.get_with_data("user", {"user": user_data["email"]})
+        
+        if not user_id:
+            self.logger.info("User not authorized", user_data)
+            self.api.post("logs", {"log": user_data, "type": "Not Authorized"})
+            return "You are not authorized."
+        
+        r = flask.redirect(flask.session["REDIRECT_URL"])
+        r.set_cookie(COOKIE_AUTH_USER_NAME, user_data["email"], max_age=COOKIE_EXPIRY)
+        r.set_cookie("AUTH-USER-IMAGE", user_data["picture"], max_age=COOKIE_EXPIRY)
+        if token:
+            r.set_cookie(
+                COOKIE_AUTH_ACCESS_TOKEN,
+                token["access_token"],
+                max_age=COOKIE_EXPIRY,
+            )
+            flask.session[user_data["email"]] = token["access_token"]
+        return r
+
     def login_callback(self):
         if "error" in flask.request.args:
             if flask.request.args.get("error") == "access_denied":
@@ -106,35 +124,7 @@ class GoogleAuth(Auth):
             google = self.__get_google_auth(token=token)
             resp = google.get(os.environ["GOOGLE_AUTH_USER_INFO_URL"])
             if resp.status_code == 200:
-                user_data = resp.json()
-                user_id = requests.get(
-                    os.environ["DB_API"] + "user",
-                    headers=self.headers,
-                    json={"user": user_data["email"]},
-                ).json()
-                if not user_id:
-                    self.logger.info("User not authorized", user_data)
-                    requests.post(
-                        os.environ["DB_API"] + "logs",
-                        headers=self.headers,
-                        json={"log": user_data, "type": "Not Authorized"},
-                    )
-                    return "You are not authorized."
-                r = flask.redirect(flask.session["REDIRECT_URL"])
-                r.set_cookie(
-                    COOKIE_AUTH_USER_NAME, user_data["email"], max_age=COOKIE_EXPIRY
-                )
-                r.set_cookie(
-                    "AUTH-USER-IMAGE", user_data["picture"], max_age=COOKIE_EXPIRY
-                )
-                if token:
-                    r.set_cookie(
-                        COOKIE_AUTH_ACCESS_TOKEN,
-                        token["access_token"],
-                        max_age=COOKIE_EXPIRY,
-                    )
-                    flask.session[user_data["email"]] = token["access_token"]
-                return r
+                return self.authorize(resp, token)
 
             return "Could not fetch your information."
 

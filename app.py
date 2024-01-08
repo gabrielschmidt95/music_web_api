@@ -1,5 +1,3 @@
-from os import environ
-
 from dash import dcc, html
 
 from server import app

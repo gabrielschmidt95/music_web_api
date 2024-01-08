@@ -1,33 +1,32 @@
 import base64
 from io import BytesIO, StringIO
 from json import loads
-from os import environ
 
 import dash_bootstrap_components as dbc
 import numpy as np
 import pandas as pd
 import pandera as pa
 import plotly.express as px
-import requests
 import spotipy
 from dash import ALL, Input, Output, State, callback_context, dcc, html
+
 from spotipy.oauth2 import SpotifyClientCredentials
+from api.db_api import DBApi
+from api.discogs import try_get_discogs, get_params, get_tracks, get_discogs
 
 from server import app
 import flask
+
+CLICK_MODE = "event+select"
+BI_TEXT = "bi bi-body-text"
 
 
 class Content:
     def __init__(self):
         self.MAX_INDEX = 3
-        self.discogs_url = "https://api.discogs.com/database/search"
-        self.headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Authorization": "Bearer " + environ["OAUTH_TOKEN"],
-        }
+        self.api = DBApi()
 
-    def get_album_for_artist(self, artist, album):
+    def get_album_for_artist(self, artist, album) -> list:
         sp = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials())
         results = sp.search(q="artist:" + artist + " album:" + album, type="album")
         if results:
@@ -35,68 +34,47 @@ class Content:
             if len(items) > 0:
                 return items
             else:
-                return None
+                return []
         else:
-            return None
+            return []
 
-    def discogs_get_url(self, row):
-        if (
-            "discogs" not in row
-            or row["discogs"] is None
-            or "tracks" not in row["discogs"]
-        ):
-            params = {
-                "token": environ["DISCOGS_TOKEN"],
-                "artist": row["artist"].lower() if not None else "",
-                "release_title": row["title"].lower()
-                if row["title"].lower() is not None
-                else "",
-                "barcode": str(row["barcode"])
-                if row["barcode"] is not None and row["barcode"] != "None"
-                else "",
-                "country": row["origin"].lower()
-                if not None and row["origin"].lower() != "none"
-                else "",
-                "year": str(row["releaseYear"]) if not None else "",
-                "format": "album",
-            }
-            resp = requests.get(self.discogs_url, params=params)
-            if resp.status_code == 200:
+    def discogs_get_url(self, row) -> html.Div:
+        if "discogs" not in row or row["discogs"] is None or row["discogs"]["id"] == 0:
+            if row["discogs"]["type"] == "NOT_FOUND":
+                return html.Div("Nao encontrado no Discogs")
+
+            params = get_params(row)
+
+            resp = get_discogs(row)
+
+            if resp:
                 result = resp.json()
                 if "results" not in result:
                     return html.Div("Nao encontrado no Discogs")
+
                 result = result["results"]
+
                 if len(result) == 0:
-                    params.pop("format")
-                    resp = requests.get(self.discogs_url, params=params)
-                    result = resp.json()["results"]
-                    if len(result) == 0:
-                        params.pop("year")
-                        resp = requests.get(self.discogs_url, params=params)
-                        result = resp.json()["results"]
-                        if len(result) == 0:
-                            params.pop("country")
-                            resp = requests.get(self.discogs_url, params=params)
-                            result = resp.json()["results"]
-                            if len(result) == 0:
-                                params.pop("barcode")
-                                resp = requests.get(self.discogs_url, params=params)
-                                result = resp.json()["results"]
+                    result = try_get_discogs(params)
 
                 if len(result) > 0:
-                    row["DISCOGS"] = result[0]
-                    row["DISCOGS"]["urls"] = [
+                    row["discogs"] = result[0]
+                    row["discogs"]["urls"] = [
                         {"id": r["id"], "uri": r["uri"]} for r in result
                     ]
-                    row["DISCOGS"]["len"] = len(result)
-                    _id = row["DISCOGS"]["id"]
-                    _type = row["DISCOGS"]["type"]
-                    tracks = requests.get(f"https://api.discogs.com/{_type}s/{_id}")
-                    if tracks.status_code == 200:
-                        row["DISCOGS"].update(tracks=tracks.json()["tracklist"])
+                    row["discogs"]["len"] = len(result)
+                    _id = row["discogs"]["id"]
+                    _type = row["discogs"]["type"]
+                    tracks = get_tracks(_type, _id)
+                    if tracks:
+                        row["discogs"].update(tracks=tracks)
 
-                    # self.conn.replace_one("CD", row["_id"], row)
+                    result = self.api.post("update/album", row)
+
+                    print("ID", result["Message"])
                 else:
+                    row["discogs"] = {"type": "NOT_FOUND"}
+                    self.api.post("update/album", row)
                     return html.Div("Nao encontrado no Discogs")
             else:
                 return html.Div(f"Error:{resp.status_code}")
@@ -106,7 +84,9 @@ class Content:
         else:
             tracklist = []
 
-        if "spotify" in row and row["spotify"]["name"]:
+        if row["spotify"]["name"] == "NOT_FOUND":
+            spotify = html.Div("Nao encontrado no Spotify")
+        elif "spotify" in row and row["spotify"]["name"]:
             spotify = dbc.Button(
                 f' SPOTIFY - {row["spotify"]["name"]}',
                 href=row["spotify"]["external_urls"]["spotify"],
@@ -118,21 +98,26 @@ class Content:
             )
         else:
             print("Getting Spotify")
-            # spotify_get = self.get_album_for_artist(row["artist"], row["title"])
-            # if spotify_get:
-            #     row["SPOTIFY"] = spotify_get[0]
-            #     # self.conn.replace_one("CD", row["_id"], row)
-            #     spotify = dbc.Button(
-            #         f' SPOTIFY - {row["SPOTIFY"]["name"]}',
-            #         href=row["SPOTIFY"]["external_urls"]["spotify"],
-            #         className="bi bi-music-note-beamed",
-            #         external_link=True,
-            #         target="_blank",
-            #         style={"margin-bottom": "1rem"},
-            #         color="success",
-            #     )
-            # else:
-            spotify = html.Div()
+            spotify_get = self.get_album_for_artist(row["artist"], row["title"])
+            if spotify_get:
+                row["spotify"] = spotify_get[0]
+
+                self.api.post("update/album", row)
+
+                spotify = dbc.Button(
+                    f' SPOTIFY - {row["spotify"]["name"]}',
+                    href=row["spotify"]["external_urls"]["spotify"],
+                    className="bi bi-music-note-beamed",
+                    external_link=True,
+                    target="_blank",
+                    style={"margin-bottom": "1rem"},
+                    color="success",
+                )
+            else:
+                row["spotify"] = {"name": "NOT_FOUND"}
+
+                self.api.post("update/album", row)
+                spotify = html.Div("Nao encontrado no Spotify")
 
         if not row["discogs"]["urls"]:
             row["discogs"]["urls"] = []
@@ -162,7 +147,7 @@ class Content:
                                                     dbc.CardLink(
                                                         f'DISCOGS - {url["id"]}',
                                                         href=f"https://www.discogs.com{url['uri'] if 'uri' in url else ''}",
-                                                        className="bi bi-body-text",
+                                                        className=BI_TEXT,
                                                         external_link=True,
                                                         target="_blank",
                                                     )
@@ -303,9 +288,10 @@ class Content:
             Input("filter_contents", "data"),
         )
         def render(_, _filter):
-            totals_by_year = requests.get(
-                environ["DB_API"] + "totals", headers=self.headers
-            ).json()
+            totals_by_year = self.api.get("totals")
+            if "year" not in totals_by_year:
+                return (None, None)
+
             df = pd.DataFrame().from_dict(
                 totals_by_year["year"], orient="index", columns=["TOTAL"]
             )
@@ -318,9 +304,9 @@ class Content:
                 title="Ano de Lançamento",
                 text_auto=True,
                 height=600,
-            ).update_layout(showlegend=False, clickmode="event+select")
+            ).update_layout(showlegend=False, clickmode=CLICK_MODE)
             total_year.update_layout(
-                showlegend=False, hovermode="x unified", clickmode="event+select"
+                showlegend=False, hovermode="x unified", clickmode=CLICK_MODE
             )
             total_year.update_traces(hovertemplate="Total: %{y}<extra></extra>")
 
@@ -337,28 +323,27 @@ class Content:
                 title="Ano de Aquisição",
                 text_auto=True,
                 height=600,
-            ).update_layout(showlegend=False, clickmode="event+select")
+            ).update_layout(showlegend=False, clickmode=CLICK_MODE)
             return total_year, total_purchase
 
         @app.callback(
             Output("total_purchase_data", "children"),
             Input("total_purchase_graph", "clickData"),
         )
-        def display_click_data(clickData):
-            if clickData:
-                year_selected = requests.post(
-                    environ["DB_API"] + "album/year",
-                    headers=self.headers,
-                    json={
-                        "year": int(clickData["points"][0]["x"]),
+        def display_click_data(click_data):
+            if click_data:
+                year_selected = self.api.post(
+                    "album/year",
+                    {
+                        "year": int(click_data["points"][0]["x"]),
                         "metric": "purchase",
                     },
-                ).json()
+                )
                 df = pd.DataFrame().from_dict(year_selected)
                 table_header = [
                     html.Thead(
                         html.Th(
-                            clickData["points"][0]["x"],
+                            click_data["points"][0]["x"],
                             colSpan="3",
                             className="table-active",
                             style={"text-align": "center", "font-size": "1.5rem"},
@@ -391,21 +376,20 @@ class Content:
             Output("total_year_data", "children"),
             Input("total_year_graph", "clickData"),
         )
-        def display_click_data(clickData):
-            if clickData:
-                year_selected = requests.post(
-                    environ["DB_API"] + "album/year",
-                    headers=self.headers,
-                    json={
-                        "year": int(clickData["points"][0]["x"]),
+        def display_click_data(click_data):
+            if click_data:
+                year_selected = self.api.post(
+                    "album/year",
+                    {
+                        "year": int(click_data["points"][0]["x"]),
                         "metric": "release_year",
                     },
-                ).json()
+                )
                 df = pd.DataFrame().from_dict(year_selected)
                 table_header = [
                     html.Thead(
                         html.Th(
-                            clickData["points"][0]["x"],
+                            click_data["points"][0]["x"],
                             colSpan="3",
                             className="table-active",
                             style={"text-align": "center", "font-size": "1.5rem"},
@@ -413,7 +397,7 @@ class Content:
                     ),
                     html.Thead(
                         html.Tr([html.Th("ARTIST"), html.Th("TITLE"), html.Th("MEDIA")])
-                    )
+                    ),
                 ]
                 table_body = [
                     html.Tbody(
@@ -481,15 +465,16 @@ class Content:
                     _filter_index = loads(cxt[0]["prop_id"].split(".")[0])["index"]
                     _filter[_filter_index] = cxt[0]["value"]
                     _filter = dict((k, v) for k, v in _filter.items() if v is not None)
-                artist = requests.post(
-                    environ["DB_API"] + "albuns",
-                    headers=self.headers,
-                    json={
+
+                artist = self.api.post(
+                    "albuns",
+                    {
                         "artist": _filter["ARTIST"] if "ARTIST" in _filter else "",
                         "media": _filter["MEDIA"] if "MEDIA" in _filter else "",
                         "origin": _filter["ORIGIN"] if "ORIGIN" in _filter else "",
                     },
-                ).json()
+                )
+
                 if not artist:
                     warning = dbc.Alert(
                         [
@@ -506,6 +491,15 @@ class Content:
                         },
                     )
                     return warning, _filter, user
+
+                elif "id" not in artist[0]:
+                    return (
+                        dbc.Alert(
+                            "Erro ao carregar dados", color="danger", className="mt-3"
+                        ),
+                        _filter,
+                        user,
+                    )
 
                 df = pd.DataFrame.from_dict(artist)
                 df = df.sort_values("releaseYear").to_dict("records")
@@ -580,11 +574,11 @@ class Content:
                                                                 ),
                                                                 dbc.ListGroupItem(
                                                                     f' IFPI MASTERING: {row["ifpiMastering"]  if row["ifpiMastering"] is not None else "" }',
-                                                                    className="bi bi-body-text",
+                                                                    className=BI_TEXT,
                                                                 ),
                                                                 dbc.ListGroupItem(
                                                                     f' IFPI MOULD: {row["ifpiMould"]  if row["ifpiMould"] is not None else "" }',
-                                                                    className="bi bi-body-text",
+                                                                    className=BI_TEXT,
                                                                 ),
                                                             ]
                                                         ),
@@ -595,15 +589,15 @@ class Content:
                                                             [
                                                                 dbc.ListGroupItem(
                                                                     f' CÓDIGO DE BARRAS: {row["barcode"] if row["barcode"] is not None else "" }',
-                                                                    className="bi bi-body-text",
+                                                                    className=BI_TEXT,
                                                                 ),
                                                                 dbc.ListGroupItem(
                                                                     f' MATRIZ: {row["matriz"]  if row["matriz"] is not None else "" }',
-                                                                    className="bi bi-body-text",
+                                                                    className=BI_TEXT,
                                                                 ),
                                                                 dbc.ListGroupItem(
                                                                     f' LOTE: {row["lote"] if row["lote"] is not None else "" }',
-                                                                    className="bi bi-body-text",
+                                                                    className=BI_TEXT,
                                                                 ),
                                                             ]
                                                         ),
@@ -669,11 +663,11 @@ class Content:
             prevent_initial_call=True,
         )
         def on_button_click(data, filename):
-            content_type, content_string = data.split(",")
+            _, content_string = data.split(",")
             decoded = base64.b64decode(content_string)
 
             if filename is None:
-                raise ""
+                raise ValueError("No file selected")
             else:
                 if "csv" in filename:
                     df = pd.read_csv(StringIO(decoded.decode("utf-8")), sep=";")
@@ -732,17 +726,16 @@ class Content:
                     )
                     df = df.to_dict("records")
 
-                    newList = []
+                    new_list = []
 
                     for d in df:
-                        newDf = {}
+                        new_df = {}
                         for key, value in d.items():
                             if key in COLUMNS:
-                                newDf[key] = value
-                        newList.append(newDf)
+                                new_df[key] = value
+                        new_list.append(new_df)
 
-                    # self.conn.drop("CD")
-                    # self.conn.insert_many("CD", newList)
+                    # TODO: Add to call to API
 
                     return dbc.Alert("SALVO", is_open=True, duration=4000)
                 except pa.errors.SchemaError as error:
@@ -764,9 +757,8 @@ class Content:
             if n is None:
                 raise ValueError()
             else:
-                all_data = requests.get(
-                    environ["DB_API"] + "all", headers=self.headers
-                ).json()
+                all_data = self.api.get("all")
+
                 df = pd.DataFrame().from_dict(all_data)
                 df = df.drop("id", axis=1)
                 df = df.drop("discogs", axis=1)

@@ -1,9 +1,8 @@
 import dash_bootstrap_components as dbc
 from dash import Input, Output, dcc, html
 from server import app
-import requests
 import os
-from auth.token import get_token
+from api.db_api import DBApi
 
 class Sidebar:
     def __init__(self):
@@ -12,6 +11,7 @@ class Sidebar:
             "Accept": "application/json",
             "Authorization": "Bearer " + os.environ["OAUTH_TOKEN"],
         }
+        self.db_api = DBApi()
 
     def layout(self):
         return dbc.Col(
@@ -42,9 +42,11 @@ class Sidebar:
     def callbacks(self):
         @app.callback(Output("media_totals", "children"), Input("df", "data"))
         def render(value):
-            totals = requests.get(
-                os.environ["DB_API"] + "totals", headers=self.headers
-            ).json()
+            totals = self.db_api.get("totals")
+            if "media" not in totals:
+                return dbc.Alert(
+                    "Erro ao carregar dados", color="danger", className="mt-3"
+                )
 
             table_header = [
                 html.Thead(
@@ -70,14 +72,8 @@ class Sidebar:
             prevent_initial_call=True,
         )
         def toggle_modal(_filter, _):
-            get_token()
-            artist = requests.get(
-                os.environ["DB_API"] + "artists", headers=self.headers
-            ).json()
-
-            medias = requests.get(
-                os.environ["DB_API"] + "medias", headers=self.headers
-            ).json()
+            artist = self.db_api.get("artists")
+            medias = self.db_api.get("medias")
 
             return [
                 dbc.Row(

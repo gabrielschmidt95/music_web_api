@@ -1,0 +1,48 @@
+import requests
+from os import environ
+from auth.token import get_token
+
+class DBApi:
+    def __init__(self) -> None:
+        self.headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": "Bearer " + environ["OAUTH_TOKEN"],
+        }
+
+    def get(self, endpoint):
+        try:
+            result = requests.get(
+                environ["DB_API"] + endpoint, headers=self.headers
+            )
+            if result.status_code == 401:
+                get_token()
+                self.headers["Authorization"] = "Bearer " + environ["OAUTH_TOKEN"]
+                return self.get(endpoint)
+
+            return result.json()
+
+        except Exception as e:
+            return {"error": e}
+    
+    def get_with_data(self, endpoint, data):
+        try:
+            result = requests.get(
+                environ["DB_API"] + endpoint,
+                headers=self.headers,
+                json=data,
+            ).json()
+            return result
+        except Exception as e:
+            return {"error": e}
+        
+    def post(self, endpoint, data):
+        try:
+            result = requests.post(
+                environ["DB_API"] + endpoint,
+                headers=self.headers,
+                json=data,
+            ).json()
+            return result
+        except Exception as e:
+            return {"error": e}

@@ -1,8 +1,37 @@
 version: "3.9"
 
 services:
+  music-go-api:
+    container_name: music-go-api
+    depends_on:
+      - mongo
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      - MONGODB_URI=mongodb://172.17.0.1:27017
+    env_file:
+      - .env
+    ports:
+      - "3000:3000/tcp"
+    networks:
+      - default
+
+  mongo:
+    container_name: mongo
+    image: mongo:latest
+    ports:
+      - "27017:27017/tcp"
+      - "28017:28017/tcp"
+    volumes:
+      - db:/data/db
+    networks:
+      - default
+  
   music-go-app:
     container_name: music-go-app
+    depends_on:
+      - music-go-api
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -12,6 +41,7 @@ services:
       - "8050:8050/tcp"
     networks:
       - default
+
 
 networks:
   default:

@@ -233,15 +233,6 @@ class Content:
                                         outline=True,
                                         id="download_xlsx_btn",
                                     ),
-                                    dcc.Upload(
-                                        dbc.Button(
-                                            " Upload XLSX",
-                                            color="primary",
-                                            className="bi bi-upload",
-                                            outline=True,
-                                        ),
-                                        id="upload_xlsx",
-                                    ),
                                     dbc.Button(
                                         " Adicionar",
                                         color="primary",
@@ -249,19 +240,23 @@ class Content:
                                         outline=True,
                                         id="insert_btn",
                                     ),
-                                    dbc.Label(
-                                        style={
-                                            "margin-top": "0.5rem",
-                                            "margin-left": "2rem",
-                                        },
-                                        id="user_label",
+                                    html.Div(
+                                        dbc.Label(
+                                            style={
+                                                "margin-top": "0.5rem",
+                                                "margin-left": "2rem",
+                                            },
+                                            id="user_label",
+                                        ),
+                                        style={"border-color": "#fff","border-width": "1px","border-style": "solid","border-radius": "5px"},
                                     ),
                                 ],
                                 style={"width": "100%"},
                             ),
                             width=12,
                         )
-                    ]
+                    ],
+                    style={"position": "sticky", "top": "0", "z-index": "1","background-color": "#fff"},
                 ),
                 html.Br(),
                 dbc.Card(
@@ -695,12 +690,12 @@ class Content:
             )
             return accord, _filter, user
 
-        @app.callback(
-            Output("upload_alert", "children"),
-            Input("upload_xlsx", "contents"),
-            State("upload_xlsx", "filename"),
-            prevent_initial_call=True,
-        )
+        # @app.callback(
+        #     Output("upload_alert", "children"),
+        #     Input("upload_xlsx", "contents"),
+        #     State("upload_xlsx", "filename"),
+        #     prevent_initial_call=True,
+        # )
         def on_button_click(data, filename):
             _, content_string = data.split(",")
             decoded = base64.b64decode(content_string)

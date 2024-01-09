@@ -8,7 +8,7 @@ import pandas as pd
 import pandera as pa
 import plotly.express as px
 import spotipy
-from dash import ALL, Input, Output, State, callback_context, dcc, html,no_update
+from dash import ALL, Input, Output, State, callback_context, dcc, html, no_update
 
 from spotipy.oauth2 import SpotifyClientCredentials
 from api.db_api import DBApi
@@ -99,6 +99,16 @@ class Content:
                     [
                         self.get_spotify(row),
                         html.Div("Nao encontrado no Discogs"),
+                        dbc.Button(
+                            "Fix Discogs?",
+                            color="warning",
+                            outline=True,
+                            className="me-1",
+                            id={
+                                "type": "fix_discogs",
+                                "index": f"{row['id']}",
+                            },
+                        ),
                     ],
                     width=4,
                     align="center",
@@ -163,7 +173,11 @@ class Content:
 
         return dbc.Row(
             [
-                self.get_image(row["discogs"]["cover_image"]),
+                self.get_image(
+                    row["discogs"]["cover_image"]
+                    if row["discogs"]["cover_image"]
+                    else "/assets/no_image_available.png"
+                ),
                 dbc.Col(
                     [
                         spotify,
@@ -209,6 +223,16 @@ class Content:
                             ],
                             start_collapsed=True,
                         ),
+                        dbc.Button(
+                            "Fix Discogs?",
+                            color="warning",
+                            outline=True,
+                            className="me-1",
+                            id={
+                                "type": "fix_discogs",
+                                "index": f"{row['id']}",
+                            },
+                        ),
                     ],
                     width=8,
                 ),
@@ -248,7 +272,12 @@ class Content:
                                             },
                                             id="user_label",
                                         ),
-                                        style={"border-color": "#fff","border-width": "1px","border-style": "solid","border-radius": "5px"},
+                                        style={
+                                            "border-color": "#fff",
+                                            "border-width": "1px",
+                                            "border-style": "solid",
+                                            "border-radius": "5px",
+                                        },
                                     ),
                                 ],
                                 style={"width": "100%"},
@@ -256,7 +285,12 @@ class Content:
                             width=12,
                         )
                     ],
-                    style={"position": "sticky", "top": "0", "z-index": "1","background-color": "#fff"},
+                    style={
+                        "position": "sticky",
+                        "top": "0",
+                        "z-index": "1",
+                        "background-color": "#fff",
+                    },
                 ),
                 html.Br(),
                 dbc.Card(
@@ -319,9 +353,8 @@ class Content:
             Output("total_year_graph", "figure"),
             Output("total_purchase_graph", "figure"),
             Input("df", "data"),
-            Input("filter_contents", "data"),
         )
-        def render(_, _filter):
+        def render(_):
             totals_by_year = self.api.get("totals")
             if "year" not in totals_by_year:
                 return (None, None)
@@ -452,15 +485,18 @@ class Content:
 
         @app.callback(
             Output("disco", "children"),
-            Output("filter_contents", "data"),
             Output("user_label", "children"),
+            Output("filter_contents", "data"),
+            Input("confirma_discogs", "n_clicks"),
             Input({"type": "filter-dropdown", "index": ALL}, "value"),
             Input("df", "data"),
             Input("url", "pathname"),
             State("filter_contents", "data"),
             prevent_initial_call=True,
         )
-        def update_output(value, _, url, _filter, request=flask.request):
+        def update_output(
+            fix_value, value, _, url, filter_contents, request=flask.request
+        ):
             if "AUTH-USER" in request.cookies and "AUTH-USER-IMAGE" in request.cookies:
                 user = [
                     html.Img(
@@ -474,13 +510,11 @@ class Content:
                 user = " No User"
 
             cxt = callback_context.triggered
+
+            if fix_value and fix_value != "Changed":
+                return no_update, no_update, no_update
+            
             if not any(value):
-                print("No Value")
-                if cxt[0]["value"] == None:
-                    try:
-                        _filter = {}
-                    except Exception:
-                        pass
                 welcome = dbc.Alert(
                     [
                         html.H4("Bem Vindo!", className="alert-heading"),
@@ -493,21 +527,32 @@ class Content:
                         "border-color": "#0d6efd",
                     },
                 )
-                return welcome, _filter, user
+                return welcome, user, filter_contents
             else:
+                artist = None
                 if cxt[0]["prop_id"].split(".")[0] not in ["df"]:
-                    _filter_index = loads(cxt[0]["prop_id"].split(".")[0])["index"]
-                    _filter[_filter_index] = cxt[0]["value"]
-                    _filter = dict((k, v) for k, v in _filter.items() if v is not None)
+                    artist = filter_contents["artist"] if "artist" in filter_contents else ""
+                    media = filter_contents["media"] if "media" in filter_contents else ""
+                    origin = filter_contents["origin"] if "origin" in filter_contents else ""
 
-                artist = self.api.post(
-                    "albuns",
-                    {
-                        "artist": _filter["ARTIST"] if "ARTIST" in _filter else "",
-                        "media": _filter["MEDIA"] if "MEDIA" in _filter else "",
-                        "origin": _filter["ORIGIN"] if "ORIGIN" in _filter else "",
-                    },
-                )
+                    try:
+                        _filter = loads(cxt[0]["prop_id"].split(".")[0])[
+                            "index"
+                        ]
+
+                        filter_contents = {
+                            "artist": value[0] if "ARTIST" in _filter else artist,
+                            "media": value[1] if "MEDIA" in _filter else media,
+                            "origin": value[2] if "ORIGIN" in _filter else origin,
+                        }
+
+                    except Exception:
+                        pass
+
+                    artist = self.api.post(
+                        "albuns",
+                        filter_contents,
+                    )
 
                 if not artist:
                     warning = dbc.Alert(
@@ -524,14 +569,13 @@ class Content:
                             "border-color": "#0d6efd",
                         },
                     )
-                    return warning, _filter, user
+                    return warning, user, filter_contents
 
                 elif "id" not in artist[0]:
                     return (
                         dbc.Alert(
                             "Erro ao carregar dados", color="danger", className="mt-3"
                         ),
-                        _filter,
                         user,
                     )
 
@@ -557,7 +601,7 @@ class Content:
                         ],
                         style={"margin-top": "1rem"},
                     )
-                    return warning, _filter, user
+                    return warning, user, filter_contents
             accord = dbc.Accordion(
                 [
                     dbc.AccordionItem(
@@ -688,7 +732,7 @@ class Content:
                 ],
                 start_collapsed=True,
             )
-            return accord, _filter, user
+            return accord, user, filter_contents
 
         # @app.callback(
         #     Output("upload_alert", "children"),
@@ -807,9 +851,14 @@ class Content:
         @app.callback(
             Output("no_discogs", "children"),
             Input("edit-btn", "n_clicks"),
+            Input("discogs_id", "data"),
         )
-        def gen_no_discogs(_):
+        def gen_no_discogs(_,data):
             n_dct = self.api.post("query", {"DISCOGS": {"type": "NOT_FOUND"}})
+            if "error" in n_dct:
+                return dbc.Alert(
+                    "Erro ao carregar dados", color="danger", className="mt-3"
+                )
             return dbc.Accordion(
                 [
                     dbc.AccordionItem(

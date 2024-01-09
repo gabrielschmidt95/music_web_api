@@ -1,5 +1,5 @@
 import dash_bootstrap_components as dbc
-from dash import Input, Output, dcc, html
+from dash import Input, Output, dcc, html,State
 from server import app
 import os
 from api.db_api import DBApi
@@ -67,13 +67,17 @@ class Sidebar:
 
         @app.callback(
             Output("drop", "children"),
-            Input("filter_contents", "data"),
             Input("url", "pathname"),
+            State("filter_contents", "data"),
             prevent_initial_call=True,
         )
         def toggle_modal(_filter, _):
             artist = self.db_api.get("artists")
             medias = self.db_api.get("medias")
+            if "media" not in medias or "origin" not in medias:
+                return dbc.Alert(
+                    "Erro ao carregar dados", color="danger", className="mt-3"
+                )
 
             return [
                 dbc.Row(
@@ -86,8 +90,8 @@ class Sidebar:
                                     {"label": str(i), "value": str(i)}
                                     for i in sorted(artist)
                                 ],
-                                value=_filter["ARTIST"]
-                                if "ARTIST" in _filter
+                                value=_filter["artist"]
+                                if "artist" in _filter
                                 else None,
                                 optionHeight=40,
                                 className="me-3",
@@ -108,7 +112,7 @@ class Sidebar:
                                     {"label": str(i), "value": str(i)}
                                     for i in sorted(medias["media"])
                                 ],
-                                value=_filter["MEDIA"] if "MEDIA" in _filter else None,
+                                value=_filter["media"] if "media" in _filter else None,
                                 className="me-3",
                             ),
                             width=9,
@@ -129,8 +133,8 @@ class Sidebar:
                                         medias["origin"]
                                     )
                                 ],
-                                value=_filter["ORIGIN"]
-                                if "ORIGIN" in _filter
+                                value=_filter["origin"]
+                                if "origin" in _filter
                                 else None,
                                 className="me-3",
                             ),

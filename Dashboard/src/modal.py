@@ -7,6 +7,7 @@ from dash import ALL, Input, Output, State, callback_context, dcc, html, no_upda
 
 from server import app
 from api.db_api import DBApi
+from api.discogs import get_data_by_id
 
 
 class DataModal:
@@ -60,6 +61,37 @@ class DataModal:
                     ],
                     is_open=False,
                     id="modal_delete",
+                ),
+                dbc.Modal(
+                    [
+                        dbc.ModalHeader(dbc.ModalTitle("Discogs Id")),
+                        dbc.ModalBody(
+                            dbc.Input(
+                                type="text",
+                                id="discogs_input",
+                                placeholder="Digite o ID do Discogs",
+                            ),
+                            id="modal_discogs_body",
+                        ),
+                        dbc.ModalFooter(
+                            [
+                                dbc.Button(
+                                    "Confirma",
+                                    id="confirma_discogs",
+                                    className="ms-auto",
+                                    n_clicks=0,
+                                ),
+                                dbc.Button(
+                                    "Cancela",
+                                    id="cancela_discogs",
+                                    className="ms-auto",
+                                    n_clicks=0,
+                                ),
+                            ]
+                        ),
+                    ],
+                    is_open=False,
+                    id="modal_discogs",
                 ),
             ]
         )
@@ -457,3 +489,34 @@ class DataModal:
                     id={"type": "edit-data", "index": "origin"},
                     placeholder="Digite a Origem",
                 )
+
+        @app.callback(
+            Output("modal_discogs", "is_open"),
+            Output("discogs_id", "data"),
+            Input({"type": "fix_discogs", "index": ALL}, "n_clicks"),
+            Input("cancela_discogs", "n_clicks"),
+            Input("confirma_discogs", "n_clicks"),
+            State("discogs_input", "value"),
+            State("discogs_id", "data"),
+            prevent_initial_call=True,
+        )
+        def toggle_modal(n_clicks, cancela, confirma, value, item_id):
+            cxt = callback_context.triggered
+            _id = cxt[0]["prop_id"].split(".")[0]
+            if _id == "confirma_discogs":
+                print("Updating Discogs ID: ", item_id)
+                album = self.api.post("album/id", {"id": item_id})
+                value = "".join(filter(str.isdigit, value))
+                row = get_data_by_id(album, value)
+                if not row:
+                    return True, "Changed"
+
+                result = self.api.post("update/album", row)
+                print("Updating Discogs: ", result)
+                return False, ""
+
+            if _id == "cancela_discogs":
+                return False, ""
+            if cxt[0]["value"]:
+                return True, loads(_id)["index"]
+            return False, ""

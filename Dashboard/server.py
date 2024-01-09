@@ -11,7 +11,7 @@ from auth.token import get_token
 
 get_token()
 
-port = int(environ.get("PORT", 5000))
+port = int(environ.get("PORT", 8050))
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP])
 

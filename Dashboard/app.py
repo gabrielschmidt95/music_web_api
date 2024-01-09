@@ -25,6 +25,7 @@ class CollectionAPP:
                 dcc.Store(id="df"),
                 dcc.Store(id="edit_id"),
                 dcc.Store(id="delete_id"),
+                dcc.Store(id="discogs_id"),
                 dcc.Location(id="url"),
             ]
         )

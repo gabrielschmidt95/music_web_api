@@ -2,8 +2,10 @@ import requests
 from os import environ
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
+import requests
 
 discogs_url = "https://api.discogs.com/database/search"
+
 
 def get_album_for_artist(artist, album):
     sp = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials())
@@ -56,12 +58,14 @@ def try_get_discogs(params):
 
     return result
 
+
 def get_tracks(_type, _id):
     tracks = requests.get(f"https://api.discogs.com/{_type}s/{_id}")
     if tracks.status_code == 200:
         return tracks.json()["tracklist"]
-    
+
     return None
+
 
 def get_discogs(row):
     params = get_params(row)
@@ -69,5 +73,40 @@ def get_discogs(row):
 
     if response.status_code == 200:
         return response
-    
+
     return None
+
+
+def get_data_by_id(row, discogs_id: int) -> None:
+    resp = requests.get(f"https://api.discogs.com/releases/{discogs_id}")
+
+    if resp.status_code != 200:
+        return None
+
+    resp = resp.json()
+
+    params = {
+        "token": environ["DISCOGS_TOKEN"],
+        "release_title": resp["title"],
+    }
+    if resp["identifiers"]:
+        params["barcode"] = [
+            i["value"] for i in resp["identifiers"] if i["type"] == "Barcode"
+        ][0]
+    else:
+        params["artist"] = resp["artists"][0]["name"]
+
+    response = requests.get(discogs_url, params=params).json()
+
+    row["discogs"] = response["results"][0]
+    row["discogs"]["urls"] = [
+        {"id": r["id"], "uri": r["uri"]} for r in response["results"]
+    ]
+    row["discogs"]["len"] = len(response)
+    _id = row["discogs"]["id"]
+    _type = row["discogs"]["type"]
+    tracks = get_tracks(_type, _id)
+    if tracks:
+        row["discogs"].update(tracks=tracks)
+
+    return row

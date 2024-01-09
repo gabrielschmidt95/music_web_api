@@ -263,6 +263,21 @@ func GetAlbunsbyArtist(artist string) []models.Collection {
 	return results
 }
 
+func QueryAlbum(query map[string]interface{}) []models.Collection {
+	findOptions := options.Find()
+	findOptions.SetLimit(10)
+
+	cursor, _ := coll.Find(context.TODO(), query, findOptions)
+
+	var results []models.Collection
+
+	if err := cursor.All(context.TODO(), &results); err != nil {
+		log.Fatal(err)
+		return []models.Collection{}
+	}
+	return results
+}
+
 func GetAlbunsbyID(id string) models.Collection {
 	docID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {

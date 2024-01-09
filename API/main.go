@@ -20,6 +20,23 @@ const albumNotFound = "Album not found"
 const invalidInput = "Invalid input"
 const contentType = "Content-Type"
 
+func queryAlbum(w http.ResponseWriter, rq *http.Request) {
+	var m map[string]interface{}
+
+	err := json.NewDecoder(rq.Body).Decode(&m)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	value := db.QueryAlbum(m)
+	if len(value) == 0 {
+		json.NewEncoder(w).Encode(map[string]string{})
+		return
+	}
+	json.NewEncoder(w).Encode(value)
+}
+
 func getAlbunsbyArtist(w http.ResponseWriter, rq *http.Request) {
 	type Artist struct {
 		Name string `json:"artist"`
@@ -274,6 +291,7 @@ func main() {
 	router.Handle("/new/album", jwt.EnsureValidToken()(http.HandlerFunc(insertAlbum))).Methods("POST")
 	router.Handle("/update/album", jwt.EnsureValidToken()(http.HandlerFunc(updateAlbum))).Methods("POST")
 	router.Handle("/delete/album", jwt.EnsureValidToken()(http.HandlerFunc(deleteAlbum))).Methods("POST")
+	router.Handle("/query", jwt.EnsureValidToken()(http.HandlerFunc(queryAlbum))).Methods("POST")
 
 	router.Handle("/logs", jwt.EnsureValidToken()(http.HandlerFunc(insertLogs))).Methods("POST")
 

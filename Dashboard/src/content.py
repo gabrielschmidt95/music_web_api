@@ -1,6 +1,7 @@
 import base64
 from io import BytesIO, StringIO
 from json import loads
+from datetime import datetime
 
 import dash_bootstrap_components as dbc
 import numpy as np
@@ -487,7 +488,7 @@ class Content:
             Output("disco", "children"),
             Output("user_label", "children"),
             Output("filter_contents", "data"),
-            Input("confirma_discogs", "n_clicks"),
+            Input("discogs_id", "data"),
             Input({"type": "filter-dropdown", "index": ALL}, "value"),
             Input("df", "data"),
             Input("url", "pathname"),
@@ -636,7 +637,7 @@ class Content:
                                                                     className="bi bi-vinyl",
                                                                 ),
                                                                 dbc.ListGroupItem(
-                                                                    f' AQUISIÇÃO: {row["purchase"] if row["purchase"] is not None else "" }',
+                                                                    f' AQUISIÇÃO: {datetime.strptime(row["purchase"],"%Y-%m-%dT%H:%M:%S%z").strftime("%d/%m/%Y") if row["purchase"] else "" }',
                                                                     className="bi bi-cart3",
                                                                 ),
                                                             ]

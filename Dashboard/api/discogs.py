@@ -88,11 +88,14 @@ def get_data_by_id(row, discogs_id: int) -> None:
     params = {
         "token": environ["DISCOGS_TOKEN"],
         "release_title": resp["title"],
+        "country": resp["country"],
     }
     if resp["identifiers"]:
         params["barcode"] = [
             i["value"] for i in resp["identifiers"] if i["type"] == "Barcode"
-        ][0]
+        ]
+        if params["barcode"]:
+            params["barcode"] = params["barcode"][0]
     else:
         params["artist"] = resp["artists"][0]["name"]
 

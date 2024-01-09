@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from auth.google_oauth import GoogleAuth
 from auth.token import get_token
 
-load_dotenv()
+load_dotenv(override=True)
 get_token()
 
 port = int(environ.get("PORT", 5000))

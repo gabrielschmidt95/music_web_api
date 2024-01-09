@@ -20,6 +20,8 @@ class DBApi:
                 self.headers["Authorization"] = "Bearer " + environ["OAUTH_TOKEN"]
                 return self.get(endpoint)
 
+            if "error" in result.text:
+                print(result.text)            
             return result.json()
 
         except Exception as e:
@@ -31,8 +33,10 @@ class DBApi:
                 environ["DB_API"] + endpoint,
                 headers=self.headers,
                 json=data,
-            ).json()
-            return result
+            )
+            if "error" in result.text:
+                print(result.text)                    
+            return result.json()
         except Exception as e:
             return {"error": e}
         
@@ -42,7 +46,9 @@ class DBApi:
                 environ["DB_API"] + endpoint,
                 headers=self.headers,
                 json=data,
-            ).json()
-            return result
+            )
+            if "error" in result.text:
+                print(result.text)                   
+            return result.json()
         except Exception as e:
             return {"error": e}

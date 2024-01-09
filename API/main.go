@@ -12,6 +12,9 @@ import (
 	"music-go-api/jwt"
 	"music-go-api/models"
 
+	_ "music-go-api/docs"
+
+	"github.com/go-openapi/runtime/middleware"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
@@ -20,6 +23,15 @@ const albumNotFound = "Album not found"
 const invalidInput = "Invalid input"
 const contentType = "Content-Type"
 
+// @Summary Query album
+// @Description Query album
+// @Tags Album
+// @Accept  json
+// @Produce  json
+// @Param album body string true "Album"
+// @Success 200 {object} string
+// @Security BearerAuth
+// @Router /query [post]
 func queryAlbum(w http.ResponseWriter, rq *http.Request) {
 	var m map[string]interface{}
 
@@ -37,6 +49,15 @@ func queryAlbum(w http.ResponseWriter, rq *http.Request) {
 	json.NewEncoder(w).Encode(value)
 }
 
+// @Summary Get albuns by artist
+// @Description Get albuns by artist
+// @Tags Album
+// @Accept  json
+// @Produce  json
+// @Param artist body string true "Artist"
+// @Success 200 {object} string
+// @Security BearerAuth
+// @Router /album/artist [post]
 func getAlbunsbyArtist(w http.ResponseWriter, rq *http.Request) {
 	type Artist struct {
 		Name string `json:"artist"`
@@ -55,6 +76,16 @@ func getAlbunsbyArtist(w http.ResponseWriter, rq *http.Request) {
 	json.NewEncoder(w).Encode(value)
 }
 
+// @Summary Get albuns by year
+// @Description Get albuns by year
+// @Tags Album
+// @Accept  json
+// @Produce  json
+// @Param year body int true "Year"
+// @Param metric body string true "Metric"
+// @Success 200 {object} string
+// @Security BearerAuth
+// @Router /album/year [post]
 func getAlbunsYear(w http.ResponseWriter, rq *http.Request) {
 	type Year struct {
 		Year   int    `json:"year"`
@@ -75,6 +106,15 @@ func getAlbunsYear(w http.ResponseWriter, rq *http.Request) {
 	json.NewEncoder(w).Encode(value)
 }
 
+// @Summary Get albuns by ID
+// @Description Get albuns by ID
+// @Tags Album
+// @Accept  json
+// @Produce  json
+// @Param id body string true "ID"
+// @Success 200 {object} string
+// @Security BearerAuth
+// @Router /album/id [post]
 func getAlbunsId(w http.ResponseWriter, rq *http.Request) {
 	type ID struct {
 		ID string `json:"id"`
@@ -90,6 +130,17 @@ func getAlbunsId(w http.ResponseWriter, rq *http.Request) {
 	json.NewEncoder(w).Encode(value)
 }
 
+// @Summary Get albuns
+// @Description Get albuns
+// @Tags Album
+// @Accept  json
+// @Produce  json
+// @Param artist body string true "Artist"
+// @Param media body string true "Media"
+// @Param origin body string true "Origin"
+// @Success 200 {object} string
+// @Security BearerAuth
+// @Router /albuns [post]
 func getAlbuns(w http.ResponseWriter, rq *http.Request) {
 	type Album struct {
 		Artist string `json:"artist"`
@@ -113,6 +164,15 @@ func getAlbuns(w http.ResponseWriter, rq *http.Request) {
 	json.NewEncoder(w).Encode(value)
 }
 
+// @Summary Insert album
+// @Description Insert album
+// @Tags Album
+// @Accept  json
+// @Produce  json
+// @Param album body string true "Album"
+// @Success 200 {object} string
+// @Security BearerAuth
+// @Router /new/album [post]
 func insertAlbum(w http.ResponseWriter, rq *http.Request) {
 	var p models.Collection
 	err := json.NewDecoder(rq.Body).Decode(&p)
@@ -128,6 +188,16 @@ func insertAlbum(w http.ResponseWriter, rq *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"Message": resp})
 }
 
+// @Summary Insert logs
+// @Description Insert logs
+// @Tags Logs
+// @Accept  json
+// @Produce  json
+// @Param log body string true "Log"
+// @Param type body string true "Type"
+// @Success 200 {object} string
+// @Security BearerAuth
+// @Router /logs [post]
 func insertLogs(w http.ResponseWriter, rq *http.Request) {
 	type Logs struct {
 		Log  interface{} `json:"log"`
@@ -143,6 +213,15 @@ func insertLogs(w http.ResponseWriter, rq *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"Message": resp})
 }
 
+// @Summary Update album
+// @Description Update album
+// @Tags Album
+// @Accept  json
+// @Produce  json
+// @Param album body string true "Album"
+// @Success 200 {object} string
+// @Security BearerAuth
+// @Router /update/album [post]
 func updateAlbum(w http.ResponseWriter, rq *http.Request) {
 	var p models.Collection
 	err := json.NewDecoder(rq.Body).Decode(&p)
@@ -161,6 +240,15 @@ func updateAlbum(w http.ResponseWriter, rq *http.Request) {
 	json.NewEncoder(w).Encode(map[string]int64{"Message": resp})
 }
 
+// @Summary Delete album
+// @Description Delete album
+// @Tags Album
+// @Accept  json
+// @Produce  json
+// @Param id body string true "ID"
+// @Success 200 {object} string
+// @Security BearerAuth
+// @Router /delete/album [post]
 func deleteAlbum(w http.ResponseWriter, rq *http.Request) {
 	type ID struct {
 		ID string `json:"id"`
@@ -182,26 +270,66 @@ func deleteAlbum(w http.ResponseWriter, rq *http.Request) {
 	json.NewEncoder(w).Encode(map[string]int64{"Message": resp})
 }
 
+// @Summary Get artists
+// @Description Get artists
+// @Tags Artist
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} string
+// @Security BearerAuth
+// @Router /artists [get]
 func getArtists(w http.ResponseWriter, rq *http.Request) {
 	resp := db.GetArtists()
 	json.NewEncoder(w).Encode(resp)
 }
 
+// @Summary Get all
+// @Description Get all
+// @Tags Album
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} string
+// @Security BearerAuth
+// @Router /all [get]
 func getAll(w http.ResponseWriter, rq *http.Request) {
 	resp := db.GetAll()
 	json.NewEncoder(w).Encode(resp)
 }
 
+// @Summary Get medias
+// @Description Get medias
+// @Tags Aggegation
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} string
+// @Security BearerAuth
+// @Router /medias [get]
 func getMedias(w http.ResponseWriter, rq *http.Request) {
 	resp := db.GetMedia()
 	json.NewEncoder(w).Encode(resp)
 }
 
+// @Summary Get totals
+// @Description Get totals
+// @Tags Aggegation
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} string
+// @Security BearerAuth
+// @Router /totals [get]
 func getTotals(w http.ResponseWriter, rq *http.Request) {
 	resp := db.GetTotals()
 	json.NewEncoder(w).Encode(resp)
 }
 
+// @Summary Get user
+// @Description Get user
+// @Tags User
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} string
+// @Security BearerAuth
+// @Router /user [get]
 func getUser(w http.ResponseWriter, rq *http.Request) {
 	type USER struct {
 		User string `json:"user"`
@@ -221,6 +349,15 @@ func getUser(w http.ResponseWriter, rq *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
+// @Summary Get albuns by title
+// @Description Get albuns by title
+// @Tags Album
+// @Accept  json
+// @Produce  json
+// @Param title body string true "Title"
+// @Success 200 {object} string
+// @Security BearerAuth
+// @Router /title [post]
 func getAlbunsbyTitle(w http.ResponseWriter, rq *http.Request) {
 	type TITLE struct {
 		Title string `json:"title"`
@@ -240,6 +377,13 @@ func getAlbunsbyTitle(w http.ResponseWriter, rq *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
+// @Summary Health check
+// @Description Health check
+// @Tags Health
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} string
+// @Router /health [get]
 func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set(contentType, "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -271,12 +415,27 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// @title Music API
+// @description This is a sample server Music API server.
+// @version 1
+// @host api.schmidtdev.cloud
+// @Schemes https
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @BasePath /
 func main() {
 	defer db.CloseConn()
 
 	router := mux.NewRouter()
 
 	router.HandleFunc("/health", HealthCheckHandler).Methods("GET")
+
+	router.Handle("/swagger.yaml", http.FileServer(http.Dir("./docs")))
+	opts := middleware.SwaggerUIOpts{SpecURL: "swagger.yaml"}
+	sh := middleware.SwaggerUI(opts, nil)
+	router.Handle("/docs", sh)
+
 	router.Handle("/artists", jwt.EnsureValidToken()(http.HandlerFunc(getArtists))).Methods("GET")
 	router.Handle("/medias", jwt.EnsureValidToken()(http.HandlerFunc(getMedias))).Methods("GET")
 	router.Handle("/totals", jwt.EnsureValidToken()(http.HandlerFunc(getTotals))).Methods("GET")

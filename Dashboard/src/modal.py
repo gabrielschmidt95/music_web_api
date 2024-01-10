@@ -96,7 +96,7 @@ class DataModal:
             ]
         )
 
-    def form_layout(self, media):
+    def form_layout(self, media: dict) -> dbc.Form:
         release_year_edit = dbc.Row(
             [
                 dbc.Label("RELEASE YEAR", html_for="RELEASE_YEAR", width=2),
@@ -186,6 +186,7 @@ class DataModal:
                         options=[
                             {"label": str(i), "value": str(i)}
                             for i in self.medias["media"]
+                            if self.medias["media"] is not None
                         ],
                         value=media["media"],
                         optionHeight=40,

@@ -2,6 +2,7 @@ import requests
 from os import environ
 from auth.token import get_token
 
+
 class DBApi:
     def __init__(self) -> None:
         self.headers = {
@@ -10,23 +11,21 @@ class DBApi:
             "Authorization": "Bearer " + environ["OAUTH_TOKEN"],
         }
 
-    def get(self, endpoint):
+    def get(self, endpoint) -> dict:
         try:
-            result = requests.get(
-                environ["DB_API"] + endpoint, headers=self.headers
-            )
+            result = requests.get(environ["DB_API"] + endpoint, headers=self.headers)
             if result.status_code == 401:
                 get_token()
                 self.headers["Authorization"] = "Bearer " + environ["OAUTH_TOKEN"]
                 return self.get(endpoint)
 
             if "error" in result.text:
-                print(result.text)            
+                print(result.text)
             return result.json()
 
         except Exception as e:
             return {"error": e}
-    
+
     def get_with_data(self, endpoint, data):
         try:
             result = requests.get(
@@ -35,11 +34,11 @@ class DBApi:
                 json=data,
             )
             if "error" in result.text:
-                print(result.text)                    
+                print(result.text)
             return result.json()
         except Exception as e:
             return {"error": e}
-        
+
     def post(self, endpoint, data):
         try:
             result = requests.post(
@@ -48,7 +47,7 @@ class DBApi:
                 json=data,
             )
             if "error" in result.text:
-                print(result.text)                   
+                print(result.text)
             return result.json()
         except Exception as e:
             return {"error": e}

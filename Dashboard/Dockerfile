@@ -32,4 +32,4 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DASH_DEBUG_MODE=False
 
 EXPOSE 8050
-CMD ["gunicorn", "-b", "0.0.0.0:8050", "--reload", "wsgi:serve"]
+CMD ["gunicorn", "-b", "0.0.0.0:8050","--timeout", "120", "--workers", "3" "--reload", "wsgi:serve"]

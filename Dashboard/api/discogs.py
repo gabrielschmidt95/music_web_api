@@ -299,14 +299,14 @@ def get_data_by_id(row, discogs_id: int) -> None:
     resp = resp.json()
 
     discogs = Discogs(
-        country=resp["country"] if resp["country"] is not None else "",
-        year=resp["year"] if resp["year"] is not None else "",
-        format=[y["name"] for y in resp["formats"]] if resp["formats"] is not None else [],
-        label=[y["name"] for y in resp["labels"]] if resp["labels"] is not None else [],
+        country=resp["country"] if "country" in resp else "",
+        year=resp["year"] if "year" in resp else "",
+        format=[y["name"] for y in resp["formats"]] if "formats" in resp else [],
+        label=[y["name"] for y in resp["labels"]] if "labels" in resp else [],
         type="album",
-        genre=resp["genres"] if resp["genres"] is not None else [],
-        style=resp["styles"] if resp["styles"] is not None else [],
-        id=resp["id"] if resp["id"] is not None else 0,
+        genre=resp["genres"] if "genres" in resp else [],
+        style=resp["styles"] if "styles" in resp else [],
+        id=resp["id"] if "id" in resp else 0,
         barcode=[y["value"] for y in resp["identifiers"] if y["type"] == "Barcode"],
         user_data=UserData(
             in_wantlist=resp["community"]["want"] if resp["community"] is not None else False,

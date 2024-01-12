@@ -309,33 +309,48 @@ def get_data_by_id(row, discogs_id: int) -> None:
         id=resp["id"] if "id" in resp else 0,
         barcode=[y["value"] for y in resp["identifiers"] if y["type"] == "Barcode"],
         user_data=UserData(
-            in_wantlist=resp["community"]["want"] if resp["community"] is not None else False,
-            in_collection=resp["community"]["have"] if resp["community"] is not None else False,
-        ),
-        master_id=resp["master_id"] if resp["master_id"] is not None else 0,
-        master_url=resp["master_url"] if resp["master_url"] is not None else "",
-        uri=resp["uri"] if resp["uri"] is not None else "",
-        catno=resp["labels"][0]["catno"] if resp["labels"] is not None else "",
-        title=resp["title"] if resp["title"] is not None else "",
-        thumb=resp["thumb"] if resp["thumb"] is not None else "",
-        cover_image=resp["images"][0]["uri"] if resp["images"] is not None else "",
-        resource_url=resp["resource_url"] if resp["resource_url"] is not None else "",
+            in_wantlist=resp["community"]["want"]
+            if "want" in resp["community"]
+            else False,
+            in_collection=resp["community"]["have"]
+            if "have" in resp["community"]
+            else False,
+        )
+        if "community" in resp
+        else UserData(False, False),
+        master_id=resp["master_id"] if "master_id" in resp else 0,
+        master_url=resp["master_url"] if "master_url" in resp else "",
+        uri=resp["uri"] if "uri" in resp else "",
+        catno=resp["labels"][0]["catno"] if "labels" in resp else "",
+        title=resp["title"] if "title" in resp else "",
+        thumb=resp["thumb"] if "thumb" in resp else "",
+        cover_image=resp["images"][0]["uri"] if "images" in resp else "",
+        resource_url=resp["resource_url"] if "resource_url" in resp else "",
         community=Community(
-            want=resp["community"]["want"] if resp["community"] is not None else 0,
-            have=resp["community"]["have"] if resp["community"] is not None else 0,
-        ) ,
-        format_quantity=resp["format_quantity"] if resp["format_quantity"] is not None else 0,
+            want=resp["community"]["want"] if "want" in resp["community"] else 0,
+            have=resp["community"]["have"] if "have" in resp["community"] else 0,
+        ) if "community" in resp else Community(0, 0),
+        format_quantity=resp["format_quantity"]
+        if "format_quantity" in resp
+        else 0,
         formats=[
             Format(
-                name=y["name"] if y["name"] is not None else "",
-                qty=y["qty"] if y["qty"] is not None else "",
-                descriptions=[z for z in y["descriptions"]] if y["descriptions"] is not None else [],
+                name=y["name"] if "name" in y else "",
+                qty=y["qty"] if "qty" in y else "",
+                descriptions=[z for z in y["descriptions"]]
+                if "descriptions" in y
+                else [],
             )
-            for y in resp["formats"] if resp["formats"] is not None
+            for y in resp["formats"]
+            if "formats" in resp
         ],
         urls=[],
         len=1,
-        tracks=[Track.from_dict(y) for y in resp["tracklist"] if resp["tracklist"] is not None],
+        tracks=[
+            Track.from_dict(y)
+            for y in resp["tracklist"]
+            if "tracklist" in resp
+        ],
     ).to_dict()
 
     row["discogs"] = discogs

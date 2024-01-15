@@ -4,6 +4,7 @@ import flask
 from authlib.client import OAuth2Session
 from .auth import Auth
 import logging
+import werkzeug.wrappers
 
 from api.db_api import DBApi
 
@@ -19,7 +20,7 @@ AUTH_REDIRECT_URI = os.environ.get("GOOGLE_AUTH_REDIRECT_URI")
 
 
 class GoogleAuth(Auth):
-    def __init__(self, app, logger=logging.getLogger(__name__)):
+    def __init__(self, app, logger=logging.getLogger(__name__)) -> None:
         Auth.__init__(self, app)
         app.server.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY")
         app.server.config["SESSION_TYPE"] = "filesystem"
@@ -27,15 +28,15 @@ class GoogleAuth(Auth):
         self.api = DBApi()
 
         @app.server.route("/ping")
-        def ping():
+        def ping() -> str:
             return "{status: ok}"
 
         @app.server.route("/login/callback")
-        def callback():
+        def callback() -> werkzeug.wrappers.response.Response:
             return self.login_callback()
 
         @app.server.route("/logout")
-        def logout():
+        def logout() -> werkzeug.wrappers.response.Response:
             return self.logout()
 
     def is_authorized(self):
@@ -80,14 +81,16 @@ class GoogleAuth(Auth):
 
         return wrap
 
-    def authorize(self, resp, token):
+    def authorize(self, resp, token) -> werkzeug.wrappers.response.Response:
         user_data = resp.json()
         user_id = self.api.get_with_data("user", {"user": user_data["email"]})
-        
+
         if not user_id:
             self.logger.info("User not authorized", user_data)
             self.api.post("logs", {"log": user_data, "type": "Not Authorized"})
-            return "You are not authorized."
+            return werkzeug.wrappers.response.Response(
+                response="User not authorized", status=403
+            )
         
         r = flask.redirect(flask.session["REDIRECT_URL"])
         r.set_cookie(COOKIE_AUTH_USER_NAME, user_data["email"], max_age=COOKIE_EXPIRY)
@@ -101,11 +104,16 @@ class GoogleAuth(Auth):
             flask.session[user_data["email"]] = token["access_token"]
         return r
 
-    def login_callback(self):
+    def login_callback(self) -> werkzeug.wrappers.response.Response:
         if "error" in flask.request.args:
             if flask.request.args.get("error") == "access_denied":
-                return "You denied access."
-            return "Error encountered."
+                return werkzeug.wrappers.response.Response(
+                    response="Access denied", status=403
+                )
+            return werkzeug.wrappers.response.Response(
+                response="Error encountered.", status=500
+            )
+
         self.logger.info(flask.request.args)
         if "code" not in flask.request.args and "state" not in flask.request.args:
             return self.login_request()
@@ -119,17 +127,22 @@ class GoogleAuth(Auth):
                     authorization_response=flask.request.url,
                 )
             except Exception as e:
-                return e.__dict__
+                return werkzeug.wrappers.response.Response(
+                    response=e.__dict__, status=403
+                )
 
             google = self.__get_google_auth(token=token)
             resp = google.get(os.environ["GOOGLE_AUTH_USER_INFO_URL"])
+            
             if resp.status_code == 200:
                 return self.authorize(resp, token)
 
-            return "Could not fetch your information."
+            return werkzeug.wrappers.response.Response(
+                response="Could not fetch your information.", status=403
+            )
 
     @staticmethod
-    def __get_google_auth(state=None, token=None):
+    def __get_google_auth(state=None, token=None) -> OAuth2Session:
         if token:
             return OAuth2Session(CLIENT_ID, token=token)
         if state:
@@ -140,7 +153,7 @@ class GoogleAuth(Auth):
         )
 
     @staticmethod
-    def logout():
+    def logout() -> werkzeug.wrappers.response.Response:
         r = flask.redirect("/")
         r.delete_cookie(COOKIE_AUTH_USER_NAME)
         r.delete_cookie(COOKIE_AUTH_ACCESS_TOKEN)

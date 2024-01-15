@@ -265,7 +265,7 @@ func GetAlbunsbyArtist(artist string) []models.Collection {
 
 func QueryAlbum(query map[string]interface{}) []models.Collection {
 	findOptions := options.Find()
-	findOptions.SetLimit(10)
+	findOptions.SetLimit(20)
 
 	cursor, _ := coll.Find(context.TODO(), query, findOptions)
 

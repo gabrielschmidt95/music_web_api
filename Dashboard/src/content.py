@@ -428,9 +428,9 @@ class Content:
                         [
                             html.Tr(
                                 [
-                                    html.Td(row["artist"]),
-                                    html.Td(row["title"]),
-                                    html.Td(row["purchase"]),
+                                    html.Td(row["artist"] if row["artist"] else ""),
+                                    html.Td(row["title"] if row["title"] else ""),
+                                    html.Td(row["purchase"] if row["purchase"] else ""),
                                 ]
                             )
                             for row in df.to_dict("records")
@@ -472,9 +472,9 @@ class Content:
                         [
                             html.Tr(
                                 [
-                                    html.Td(row["artist"]),
-                                    html.Td(row["title"]),
-                                    html.Td(row["media"]),
+                                    html.Td(row["artist"] if row["artist"] else ""),
+                                    html.Td(row["title"] if row["title"] else ""),
+                                    html.Td(row["media"] if row["media"] else ""),
                                 ]
                             )
                             for row in df.to_dict("records")
@@ -514,7 +514,7 @@ class Content:
 
             if fix_value and fix_value != "Changed":
                 return no_update, no_update, no_update
-            
+
             if not any(value):
                 welcome = dbc.Alert(
                     [
@@ -529,80 +529,85 @@ class Content:
                     },
                 )
                 return welcome, user, filter_contents
-            else:
-                artist = None
-                if cxt[0]["prop_id"].split(".")[0] not in ["df"]:
-                    artist = filter_contents["artist"] if "artist" in filter_contents else ""
-                    media = filter_contents["media"] if "media" in filter_contents else ""
-                    origin = filter_contents["origin"] if "origin" in filter_contents else ""
+            
+            artist = None
+            if cxt[0]["prop_id"].split(".")[0] not in ["df"]:
+                artist = (
+                    filter_contents["artist"] if "artist" in filter_contents else ""
+                )
+                media = (
+                    filter_contents["media"] if "media" in filter_contents else ""
+                )
+                origin = (
+                    filter_contents["origin"] if "origin" in filter_contents else ""
+                )
 
-                    try:
-                        _filter = loads(cxt[0]["prop_id"].split(".")[0])[
-                            "index"
-                        ]
+                try:
+                    _filter = loads(cxt[0]["prop_id"].split(".")[0])["index"]
 
-                        filter_contents = {
-                            "artist": value[0] if "ARTIST" in _filter else artist,
-                            "media": value[1] if "MEDIA" in _filter else media,
-                            "origin": value[2] if "ORIGIN" in _filter else origin,
-                        }
+                    filter_contents = {
+                        "artist": value[0] if "ARTIST" in _filter else artist,
+                        "media": value[1] if "MEDIA" in _filter else media,
+                        "origin": value[2] if "ORIGIN" in _filter else origin,
+                    }
 
-                    except Exception:
-                        pass
+                except Exception:
+                    pass
 
-                    artist = self.api.post(
-                        "albuns",
-                        filter_contents,
-                    )
+                artist = self.api.post(
+                    "albuns",
+                    filter_contents,
+                )
 
-                if not artist:
-                    warning = dbc.Alert(
-                        [
-                            html.H4(
-                                "Nenhum resultado encontrado", className="alert-heading"
-                            ),
-                            html.P("Utilize os filtros para realizar a pesquisa"),
-                        ],
-                        style={
-                            "margin-top": "1rem",
-                            "background-color": "#fff",
-                            "color": "#0d6efd",
-                            "border-color": "#0d6efd",
-                        },
-                    )
-                    return warning, user, filter_contents
-
-                elif "id" not in artist[0]:
-                    return (
-                        dbc.Alert(
-                            "Erro ao carregar dados", color="danger", className="mt-3"
+            if not artist:
+                warning = dbc.Alert(
+                    [
+                        html.H4(
+                            "Nenhum resultado encontrado", className="alert-heading"
                         ),
-                        user,
-                    )
+                        html.P("Utilize os filtros para realizar a pesquisa"),
+                    ],
+                    style={
+                        "margin-top": "1rem",
+                        "background-color": "#fff",
+                        "color": "#0d6efd",
+                        "border-color": "#0d6efd",
+                    },
+                )
+                return warning, user, filter_contents
+            
+            if isinstance(artist, dict) and "id" not in artist or isinstance(artist, list) and "id" not in artist[0]:
+                return (
+                    dbc.Alert(
+                        "Erro ao carregar dados", color="danger", className="mt-3"
+                    ),
+                    user,
+                )
 
-                df = pd.DataFrame.from_dict(artist)
-                df = df.sort_values("releaseYear").to_dict("records")
+            df = pd.DataFrame.from_dict(artist)
+            df = df.sort_values("releaseYear").to_dict("records")
 
-                n_dct = {}
-                for v in df:
-                    if v["artist"] not in n_dct:
-                        n_dct[v["artist"]] = []
-                    n_dct[v["artist"]].append(v)
+            n_dct = {}
+            for v in df:
+                if v["artist"] not in n_dct:
+                    n_dct[v["artist"]] = []
+                n_dct[v["artist"]].append(v)
 
-                if len(df) > 50:
-                    warning = dbc.Alert(
-                        [
-                            html.H4(
-                                "Acima de 50 unidades encontradas",
-                                className="alert-heading",
-                            ),
-                            html.P(
-                                "Utilize o filtro de forma mais granular ou Realize o download da Planilha"
-                            ),
-                        ],
-                        style={"margin-top": "1rem"},
-                    )
-                    return warning, user, filter_contents
+            if len(df) > 50:
+                warning = dbc.Alert(
+                    [
+                        html.H4(
+                            "Acima de 50 unidades encontradas",
+                            className="alert-heading",
+                        ),
+                        html.P(
+                            "Utilize o filtro de forma mais granular ou Realize o download da Planilha"
+                        ),
+                    ],
+                    style={"margin-top": "1rem"},
+                )
+                return warning, user, filter_contents
+            
             accord = dbc.Accordion(
                 [
                     dbc.AccordionItem(
@@ -612,11 +617,11 @@ class Content:
                                     dbc.AccordionItem(
                                         [
                                             html.H4(
-                                                f' {row["title"]}',
+                                                f' {row["title"] if row["title"] is not None else ""}',
                                                 className="card-title bi bi-book",
                                             ),
                                             html.H5(
-                                                f' {row["artist"]}',
+                                                f' {row["artist"] if row["artist"] is not None else ""}',
                                                 className="card-title bi bi-person",
                                             ),
                                             dbc.Row(
@@ -720,7 +725,7 @@ class Content:
                                             html.Hr(),
                                             self.discogs_get_url(row),
                                         ],
-                                        title=f'{int(row["releaseYear"]) if row["releaseYear"] is not None else ""} - {row["title"]}',
+                                        title=f'{int(row["releaseYear"]) if row["releaseYear"] is not None else ""} - {row["title"] if row["title"] is not None else ""}',
                                     )
                                     for row in value
                                 ],
@@ -854,7 +859,7 @@ class Content:
             Input("edit-btn", "n_clicks"),
             Input("discogs_id", "data"),
         )
-        def gen_no_discogs(_,data):
+        def gen_no_discogs(_, data):
             n_dct = self.api.post("query", {"DISCOGS": {"type": "NOT_FOUND"}})
             if "error" in n_dct:
                 return dbc.Alert(
@@ -868,11 +873,11 @@ class Content:
                                 dbc.AccordionItem(
                                     [
                                         html.H4(
-                                            f' {row["title"]}',
+                                            f' {row["title"] if "title" in row else ""}',
                                             className="card-title bi bi-book",
                                         ),
                                         html.H5(
-                                            f' {row["artist"]}',
+                                            f' {row["artist"] if row["artist"] is not None else ""}',
                                             className="card-title bi bi-person",
                                         ),
                                         dbc.Row(
@@ -976,12 +981,12 @@ class Content:
                                         html.Hr(),
                                         self.discogs_get_url(row),
                                     ],
-                                    title=f'{int(row["releaseYear"]) if row["releaseYear"] is not None else ""} - {row["title"]}',
+                                    title=f'{int(row["releaseYear"]) if row["releaseYear"] is not None else ""} - {row["title"] if row["title"] is not None else ""}',
                                 ),
                                 start_collapsed=True,
                             )
                         ],
-                        title=row["title"],
+                        title=row["title"] if row["title"] is not None else "",
                     )
                     for row in n_dct
                 ],

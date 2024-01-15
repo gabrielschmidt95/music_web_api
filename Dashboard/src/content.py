@@ -543,7 +543,8 @@ class Content:
                 )
                 return welcome, user, filter_contents
 
-            artist: dict = {}
+            artist = []
+
             if cxt[0]["prop_id"].split(".")[0] not in ["df"]:
                 artist_filter = (
                     filter_contents["artist"] if "artist" in filter_contents else ""
@@ -565,12 +566,10 @@ class Content:
                 except Exception:
                     pass
 
-                artist_dict = self.api.post(
+                artist = self.api.post(
                     "albuns",
                     filter_contents,
                 )
-                if isinstance(artist_dict, dict):
-                    artist = artist_dict
 
             if not artist:
                 warning = dbc.Alert(
@@ -600,7 +599,7 @@ class Content:
                     user,
                 )
 
-            df = pd.DataFrame.from_dict(artist)
+            df = pd.DataFrame.from_dict(artist) # type: ignore
             df = df.sort_values("releaseYear").to_dict("records")
 
             n_dct = {}

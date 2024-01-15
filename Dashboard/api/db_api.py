@@ -1,6 +1,7 @@
 import requests
 from os import environ
 from auth.token import get_token
+from typing import Union
 
 
 class DBApi:
@@ -26,7 +27,7 @@ class DBApi:
         except Exception as e:
             return {"error": e}
 
-    def get_with_data(self, endpoint, data):
+    def get_with_data(self, endpoint, data)-> Union[dict, list]:
         try:
             result = requests.get(
                 environ["DB_API"] + endpoint,
@@ -39,7 +40,7 @@ class DBApi:
         except Exception as e:
             return {"error": e}
 
-    def post(self, endpoint, data):
+    def post(self, endpoint, data)-> Union[dict, list]:
         try:
             result = requests.post(
                 environ["DB_API"] + endpoint,

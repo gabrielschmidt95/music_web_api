@@ -1,7 +1,6 @@
-import base64
-from io import BytesIO, StringIO
 from json import loads
 from datetime import datetime
+from typing import Union, Any
 
 import dash_bootstrap_components as dbc
 import numpy as np
@@ -20,7 +19,9 @@ import flask
 
 CLICK_MODE = "event+select"
 BI_TEXT = "bi bi-body-text"
+BI_CALENDAR = "bi bi-calendar-event"
 UPDATE_ENDPOINT = "update/album"
+ERRO_DADOS = "Erro ao carregar dados"
 
 
 class Content:
@@ -40,7 +41,7 @@ class Content:
         else:
             return []
 
-    def get_spotify(self, row) -> html.Div:
+    def get_spotify(self, row) -> Union[html.Div, dbc.Button]:
         if row["spotify"]["name"] == "NOT_FOUND":
             spotify = html.Div("Nao encontrado no Spotify")
         elif "spotify" in row and row["spotify"]["name"]:
@@ -78,7 +79,7 @@ class Content:
 
         return spotify
 
-    def get_image(self, cover_image) -> html.Div:
+    def get_image(self, cover_image) -> dbc.Col:
         return dbc.Col(
             [
                 dbc.Row(
@@ -90,9 +91,9 @@ class Content:
             align="center",
         )
 
-    def return_no_discogs(self, row) -> html.Div:
+    def return_no_discogs(self, row) -> dbc.Row:
         # load cover image from assets
-        cover_image = f"/assets/no_image_available.png"
+        cover_image = "/assets/no_image_available.png"
         return dbc.Row(
             [
                 self.get_image(cover_image),
@@ -125,7 +126,7 @@ class Content:
 
         return tracklist
 
-    def discogs_get_url(self, row) -> html.Div:
+    def discogs_get_url(self, row) -> dbc.Row:
         if "discogs" not in row or row["discogs"] is None or row["discogs"]["id"] == 0:
             if row["discogs"]["type"] == "NOT_FOUND":
                 return self.return_no_discogs(row)
@@ -165,7 +166,7 @@ class Content:
                 print("ID", result)
 
             else:
-                return html.Div(f"Error:{resp.status_code}")
+                return dbc.Row(html.Div(f"Error on get Discogs for {row['title']}"))
 
         if not row["discogs"]["urls"]:
             row["discogs"]["urls"] = []
@@ -240,6 +241,42 @@ class Content:
             ]
         )
 
+    def button_group(self) -> dbc.ButtonGroup:
+        return dbc.ButtonGroup(
+            [
+                dbc.Button(
+                    " Download XLSX",
+                    color="primary",
+                    className="bi bi-download",
+                    outline=True,
+                    id="download_xlsx_btn",
+                ),
+                dbc.Button(
+                    " Adicionar",
+                    color="primary",
+                    className="bi bi-plus-circle",
+                    outline=True,
+                    id="insert_btn",
+                ),
+                html.Div(
+                    dbc.Label(
+                        style={
+                            "margin-top": "0.5rem",
+                            "margin-left": "2rem",
+                        },
+                        id="user_label",
+                    ),
+                    style={
+                        "border-color": "#fff",
+                        "border-width": "1px",
+                        "border-style": "solid",
+                        "border-radius": "5px",
+                    },
+                ),
+            ],
+            style={"width": "100%"},
+        )
+
     def layout(self) -> html.Div:
         return html.Div(
             [
@@ -249,40 +286,7 @@ class Content:
                 dbc.Row(
                     [
                         dbc.Col(
-                            dbc.ButtonGroup(
-                                [
-                                    dbc.Button(
-                                        " Download XLSX",
-                                        color="primary",
-                                        className="bi bi-download",
-                                        outline=True,
-                                        id="download_xlsx_btn",
-                                    ),
-                                    dbc.Button(
-                                        " Adicionar",
-                                        color="primary",
-                                        className="bi bi-plus-circle",
-                                        outline=True,
-                                        id="insert_btn",
-                                    ),
-                                    html.Div(
-                                        dbc.Label(
-                                            style={
-                                                "margin-top": "0.5rem",
-                                                "margin-left": "2rem",
-                                            },
-                                            id="user_label",
-                                        ),
-                                        style={
-                                            "border-color": "#fff",
-                                            "border-width": "1px",
-                                            "border-style": "solid",
-                                            "border-radius": "5px",
-                                        },
-                                    ),
-                                ],
-                                style={"width": "100%"},
-                            ),
+                            self.button_group(),
                             width=12,
                         )
                     ],
@@ -349,13 +353,13 @@ class Content:
             className="custom-content",
         )
 
-    def callbacks(self):
+    def callbacks(self) -> None:
         @app.callback(
             Output("total_year_graph", "figure"),
             Output("total_purchase_graph", "figure"),
             Input("df", "data"),
         )
-        def render(_):
+        def render(_) -> Union[html.Div, Any]:
             totals_by_year = self.api.get("totals")
             if "year" not in totals_by_year:
                 return (None, None)
@@ -398,7 +402,7 @@ class Content:
             Output("total_purchase_data", "children"),
             Input("total_purchase_graph", "clickData"),
         )
-        def display_click_data(click_data):
+        def __total_purchase__(click_data) -> Union[html.Div, Any]:
             if click_data:
                 year_selected = self.api.post(
                     "album/year",
@@ -407,6 +411,9 @@ class Content:
                         "metric": "purchase",
                     },
                 )
+                if not isinstance(year_selected, dict):
+                    return dbc.Alert(ERRO_DADOS, color="danger", className="mt-3")
+
                 df = pd.DataFrame().from_dict(year_selected)
                 table_header = [
                     html.Thead(
@@ -437,14 +444,15 @@ class Content:
                         ]
                     )
                 ]
-                table = dbc.Table(table_header + table_body, bordered=True)
-                return table
+                return dbc.Table(table_header + table_body, bordered=True)
+
+            return no_update
 
         @app.callback(
             Output("total_year_data", "children"),
             Input("total_year_graph", "clickData"),
         )
-        def display_click_data(click_data):
+        def __total_year_data__(click_data) -> Union[html.Div, Any]:
             if click_data:
                 year_selected = self.api.post(
                     "album/year",
@@ -453,6 +461,9 @@ class Content:
                         "metric": "release_year",
                     },
                 )
+                if not isinstance(year_selected, dict):
+                    return dbc.Alert(ERRO_DADOS, color="danger", className="mt-3")
+
                 df = pd.DataFrame().from_dict(year_selected)
                 table_header = [
                     html.Thead(
@@ -483,6 +494,8 @@ class Content:
                 ]
                 table = dbc.Table(table_header + table_body, bordered=True)
                 return table
+            
+            return no_update
 
         @app.callback(
             Output("disco", "children"),
@@ -495,9 +508,9 @@ class Content:
             State("filter_contents", "data"),
             prevent_initial_call=True,
         )
-        def update_output(
+        def __update_disco__(
             fix_value, value, _, url, filter_contents, request=flask.request
-        ):
+        )-> Union[html.Div, Any]:
             if "AUTH-USER" in request.cookies and "AUTH-USER-IMAGE" in request.cookies:
                 user = [
                     html.Img(
@@ -529,15 +542,13 @@ class Content:
                     },
                 )
                 return welcome, user, filter_contents
-            
-            artist = None
+
+            artist: dict = {}
             if cxt[0]["prop_id"].split(".")[0] not in ["df"]:
-                artist = (
+                artist_filter = (
                     filter_contents["artist"] if "artist" in filter_contents else ""
                 )
-                media = (
-                    filter_contents["media"] if "media" in filter_contents else ""
-                )
+                media = filter_contents["media"] if "media" in filter_contents else ""
                 origin = (
                     filter_contents["origin"] if "origin" in filter_contents else ""
                 )
@@ -546,7 +557,7 @@ class Content:
                     _filter = loads(cxt[0]["prop_id"].split(".")[0])["index"]
 
                     filter_contents = {
-                        "artist": value[0] if "ARTIST" in _filter else artist,
+                        "artist": value[0] if "ARTIST" in _filter else artist_filter,
                         "media": value[1] if "MEDIA" in _filter else media,
                         "origin": value[2] if "ORIGIN" in _filter else origin,
                     }
@@ -554,10 +565,12 @@ class Content:
                 except Exception:
                     pass
 
-                artist = self.api.post(
+                artist_dict = self.api.post(
                     "albuns",
                     filter_contents,
                 )
+                if isinstance(artist_dict, dict):
+                    artist = artist_dict
 
             if not artist:
                 warning = dbc.Alert(
@@ -575,12 +588,15 @@ class Content:
                     },
                 )
                 return warning, user, filter_contents
-            
-            if isinstance(artist, dict) and "id" not in artist or isinstance(artist, list) and "id" not in artist[0]:
+
+            if (
+                isinstance(artist, dict)
+                and "id" not in artist
+                or isinstance(artist, list)
+                and "id" not in artist[0]
+            ):
                 return (
-                    dbc.Alert(
-                        "Erro ao carregar dados", color="danger", className="mt-3"
-                    ),
+                    dbc.Alert(ERRO_DADOS, color="danger", className="mt-3"),
                     user,
                 )
 
@@ -607,7 +623,7 @@ class Content:
                     style={"margin-top": "1rem"},
                 )
                 return warning, user, filter_contents
-            
+
             accord = dbc.Accordion(
                 [
                     dbc.AccordionItem(
@@ -631,11 +647,11 @@ class Content:
                                                             [
                                                                 dbc.ListGroupItem(
                                                                     f' ANO DE LANÇAMENTO: {row["releaseYear"] if row["releaseYear"] is not None else ""}',
-                                                                    className="bi bi-calendar-event",
+                                                                    className=BI_CALENDAR,
                                                                 ),
                                                                 dbc.ListGroupItem(
                                                                     f' ANO DA EDIÇÃO: {int(row["editionYear"]) if row["editionYear"] is not None else ""}',
-                                                                    className="bi bi-calendar-event",
+                                                                    className=BI_CALENDAR,
                                                                 ),
                                                                 dbc.ListGroupItem(
                                                                     f' MEDIA: {row["media"] if row["media"] is not None else ""}',
@@ -740,104 +756,12 @@ class Content:
             )
             return accord, user, filter_contents
 
-        # @app.callback(
-        #     Output("upload_alert", "children"),
-        #     Input("upload_xlsx", "contents"),
-        #     State("upload_xlsx", "filename"),
-        #     prevent_initial_call=True,
-        # )
-        def on_button_click(data, filename):
-            _, content_string = data.split(",")
-            decoded = base64.b64decode(content_string)
-
-            if filename is None:
-                raise ValueError("No file selected")
-            else:
-                if "csv" in filename:
-                    df = pd.read_csv(StringIO(decoded.decode("utf-8")), sep=";")
-                elif "xls" in filename:
-                    df = pd.read_excel(BytesIO(decoded), dtype={"BARCODE": str})
-                else:
-                    return dbc.Alert(
-                        "FORMATO INVALIDO", is_open=True, duration=4000, color="danger"
-                    )
-
-                COLUMNS = (
-                    "RELEASE_YEAR",
-                    "ARTIST",
-                    "TITLE",
-                    "MEDIA",
-                    "PURCHASE",
-                    "ORIGIN",
-                    "EDITION_YEAR",
-                    "IFPI_MASTERING",
-                    "IFPI_MOULD",
-                    "BARCODE",
-                    "MATRIZ",
-                    "LOTE",
-                )
-
-                for col in df.select_dtypes(include=["datetime64"]).columns.tolist():
-                    df[col] = df[col].astype(str)
-
-                validate_schema = pa.DataFrameSchema(
-                    {
-                        "RELEASE_YEAR": pa.Column(int),
-                        "ARTIST": pa.Column(str),
-                        "TITLE": pa.Column(str),
-                        "MEDIA": pa.Column(str),
-                        "PURCHASE": pa.Column(object, nullable=True),
-                        "ORIGIN": pa.Column(str, nullable=True),
-                        "EDITION_YEAR": pa.Column(float, nullable=True),
-                        "IFPI_MASTERING": pa.Column(str, nullable=True),
-                        "IFPI_MOULD": pa.Column(str, nullable=True),
-                        "MATRIZ": pa.Column(str, nullable=True),
-                        "LOTE": pa.Column(str, nullable=True),
-                    }
-                )
-
-                try:
-                    validate_schema(df)
-                    df.replace(
-                        {
-                            pd.NaT: None,
-                            np.nan: None,
-                            "NaT": None,
-                            "": None,
-                            "None": None,
-                        },
-                        inplace=True,
-                    )
-                    df = df.to_dict("records")
-
-                    new_list = []
-
-                    for d in df:
-                        new_df = {}
-                        for key, value in d.items():
-                            if key in COLUMNS:
-                                new_df[key] = value
-                        new_list.append(new_df)
-
-                    # TODO: Add to call to API
-
-                    return dbc.Alert("SALVO", is_open=True, duration=4000)
-                except pa.errors.SchemaError as error:
-                    return dbc.Alert(
-                        [
-                            html.P(f"ERRO NOS DADOS DA COLUNA: {error.schema.name}"),
-                            html.P(f"TIPO ESPERADO: {error.check}"),
-                        ],
-                        is_open=True,
-                        color="danger",
-                    )
-
         @app.callback(
             Output("download_xlsx", "data"),
             Input("download_xlsx_btn", "n_clicks"),
             prevent_initial_call=True,
         )
-        def on_button_click(n):
+        def __download_xlsx__(n) -> Union[html.Div, Any]:
             if n is None:
                 raise ValueError()
             else:
@@ -849,7 +773,7 @@ class Content:
                 df = df.drop("spotify", axis=1)
                 df["purchase"] = pd.to_datetime(df["purchase"]).dt.date
                 df.replace(
-                    {pd.NaT: None, np.nan: None, "NaT": None, "": None, "None": None},
+                    {pd.NaT: None, np.nan: None, "NaT": None, "": None, "None": None},  # type: ignore
                     inplace=True,
                 )
                 return dcc.send_data_frame(df.to_excel, "collection.xlsx")
@@ -859,12 +783,10 @@ class Content:
             Input("edit-btn", "n_clicks"),
             Input("discogs_id", "data"),
         )
-        def gen_no_discogs(_, data):
+        def __gen_no_discogs__(_, data)-> Union[html.Div, Any]:
             n_dct = self.api.post("query", {"DISCOGS": {"type": "NOT_FOUND"}})
             if "error" in n_dct:
-                return dbc.Alert(
-                    "Erro ao carregar dados", color="danger", className="mt-3"
-                )
+                return dbc.Alert(ERRO_DADOS, color="danger", className="mt-3")
             return dbc.Accordion(
                 [
                     dbc.AccordionItem(
@@ -887,11 +809,11 @@ class Content:
                                                         [
                                                             dbc.ListGroupItem(
                                                                 f' ANO DE LANÇAMENTO: {row["releaseYear"] if row["releaseYear"] is not None else ""}',
-                                                                className="bi bi-calendar-event",
+                                                                className=BI_CALENDAR,
                                                             ),
                                                             dbc.ListGroupItem(
                                                                 f' ANO DA EDIÇÃO: {int(row["editionYear"]) if row["editionYear"] is not None else ""}',
-                                                                className="bi bi-calendar-event",
+                                                                className=BI_CALENDAR,
                                                             ),
                                                             dbc.ListGroupItem(
                                                                 f' MEDIA: {row["media"] if row["media"] is not None else ""}',

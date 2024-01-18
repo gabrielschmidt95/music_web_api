@@ -20,7 +20,6 @@ import (
 )
 
 const albumNotFound = "Album not found"
-const invalidInput = "Invalid input"
 const contentType = "Content-Type"
 
 // @Summary Query album
@@ -206,7 +205,7 @@ func insertLogs(w http.ResponseWriter, rq *http.Request) {
 	var p Logs
 	err := json.NewDecoder(rq.Body).Decode(&p)
 	if err != nil {
-		json.NewEncoder(w).Encode(map[string]string{"Message": invalidInput})
+		json.NewEncoder(w).Encode(map[string]string{"Message": err.Error()})
 		return
 	}
 	resp := db.InsertLogs(p)
@@ -226,7 +225,7 @@ func updateAlbum(w http.ResponseWriter, rq *http.Request) {
 	var p models.Collection
 	err := json.NewDecoder(rq.Body).Decode(&p)
 	if err != nil {
-		json.NewEncoder(w).Encode(map[string]string{"Message": invalidInput, "err": err.Error()})
+		json.NewEncoder(w).Encode(map[string]string{"Message": err.Error()})
 		return
 	}
 	resp := db.UpdateAlbum(p)

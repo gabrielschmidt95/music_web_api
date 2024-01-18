@@ -177,7 +177,7 @@ func insertAlbum(w http.ResponseWriter, rq *http.Request) {
 	var p models.Collection
 	err := json.NewDecoder(rq.Body).Decode(&p)
 	if err != nil {
-		json.NewEncoder(w).Encode(map[string]string{"Message": invalidInput})
+		json.NewEncoder(w).Encode(map[string]string{"Message": err.Error()})
 		return
 	}
 	if p.Artist == "" || p.Title == "" {

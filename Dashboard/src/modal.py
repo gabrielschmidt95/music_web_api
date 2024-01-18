@@ -367,13 +367,16 @@ class DataModal:
             if cxt[0]["prop_id"] == "edit-btn.n_clicks":
                 return "", "", False, None
             if cxt[0]["value"]:
+                media = {}
                 try:
                     _id = loads(cxt[0]["prop_id"].split(".")[0])["index"]
-                    media = self.api.post("album/id", {"id": _id})
+                    m = self.api.post("album/id", {"id": _id})
+                    if isinstance(m, dict):
+                        media = m
 
                 except Exception:
                     _id = None
-                    media = {}
+                    media = {"artist": None, "title": None, "media": None, "id": None}
 
                 title = (
                     f"{media['artist']} - {media['title']}"
@@ -444,7 +447,7 @@ class DataModal:
             _id = cxt[0]["prop_id"].split(".")[0]
             if _id == "confirma_btn":
                 result = self.api.post("delete/album", {"id": item_id})
-                print("Deleted: ", result["Message"])
+                print("Deleted: ", result["Message"] if "Message" in result else result)
                 return False, ""
             if _id == "cancela_btn":
                 return False, ""

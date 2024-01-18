@@ -798,7 +798,7 @@ class Content:
                                             className="card-title bi bi-book",
                                         ),
                                         html.H5(
-                                            f' {row["artist"] if row["artist"] is not None else ""}',
+                                            f' {row["artist"] if "artist" in row else ""}',
                                             className="card-title bi bi-person",
                                         ),
                                         dbc.Row(

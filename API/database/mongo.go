@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"log"
 	"os"
 	"strconv"
@@ -28,37 +29,38 @@ func init() {
 	GetColl()
 }
 
-func convertDate(value interface{}) time.Time {
+func convertDate(value interface{}) (time.Time, error) {
 	// Convert string Purchase to date field
-	if value == nil {
-		return time.Time{}
+	if value == nil || value == "" {
+		return time.Now(), errors.New("Purchase is empty")
 	}
+
 	// check string formar if contains parsing time "2024-01-08T00:00:00Z": extra text: "T00:00:00Z"
 	if strings.Contains(value.(string), "T") {
 		date, error := time.Parse("2006-01-02T00:00:00Z", value.(string))
 
 		if error != nil {
-			log.Fatal(error)
+			return time.Now(), error
 		}
 
-		return date
+		return date, nil
 
 	} else if strings.Contains(value.(string), "Z") {
 		date, error := time.Parse("2006-01-02Z", value.(string))
 
 		if error != nil {
-			log.Fatal(error)
+			return time.Now(), error
 		}
 
-		return date
+		return date, nil
 	}
 	date, error := time.Parse("2006-01-02", value.(string))
 
 	if error != nil {
-		log.Fatal(error)
+		return time.Now(), error
 	}
 
-	return date
+	return date, nil
 }
 
 func CloseConn() {
@@ -97,7 +99,6 @@ func GetAll() []models.Collection {
 
 	var results []models.Collection
 	if err := cursor.All(context.TODO(), &results); err != nil {
-		log.Fatal(err)
 		return []models.Collection{}
 	}
 	return results
@@ -257,7 +258,6 @@ func GetAlbunsbyArtist(artist string) []models.Collection {
 
 	var results []models.Collection
 	if err := cursor.All(context.TODO(), &results); err != nil {
-		log.Fatal(err)
 		return []models.Collection{}
 	}
 	return results
@@ -272,7 +272,6 @@ func QueryAlbum(query map[string]interface{}) []models.Collection {
 	var results []models.Collection
 
 	if err := cursor.All(context.TODO(), &results); err != nil {
-		log.Fatal(err)
 		return []models.Collection{}
 	}
 	return results
@@ -288,7 +287,6 @@ func GetAlbunsbyID(id string) models.Collection {
 	var results models.Collection
 
 	if err := cursor.Decode(&results); err != nil {
-		log.Fatal(err)
 		return models.Collection{}
 	}
 
@@ -331,7 +329,6 @@ func GetAlbunsbyYear(year int, metric string) []interface{} {
 	var results []Album
 
 	if err := cursor.All(context.TODO(), &results); err != nil {
-		log.Fatal(err)
 		return []interface{}{}
 	}
 
@@ -361,7 +358,6 @@ func GetAlbuns(artist, media, origin string) []models.Collection {
 
 		var results []models.Collection
 		if err := cursor.All(context.TODO(), &results); err != nil {
-			log.Fatal(err)
 			return []models.Collection{}
 		}
 		return results
@@ -373,7 +369,6 @@ func GetAlbunsbyTitle(title string) []models.Collection {
 
 	var results []models.Collection
 	if err := cursor.All(context.TODO(), &results); err != nil {
-		log.Fatal(err)
 		return []models.Collection{}
 	}
 	return results
@@ -398,7 +393,13 @@ func InsertAlbum(album models.Collection) string {
 	if GetAlbunsbyTitle(album.Title) != nil {
 		return "Album already exists"
 	}
-	album.Purchase = convertDate(album.Purchase)
+	date, err := convertDate(album.Purchase)
+
+	album.Purchase = date
+
+	if err != nil {
+		album.Purchase = nil
+	}
 
 	insertResult, err := coll.InsertOne(context.TODO(), album)
 	if err != nil {
@@ -416,7 +417,13 @@ func InsertLogs(log interface{}) string {
 }
 
 func UpdateAlbum(album models.Collection) int64 {
-	album.Purchase = convertDate(album.Purchase)
+	date, err := convertDate(album.Purchase)
+
+	album.Purchase = date
+
+	if err != nil {
+		album.Purchase = nil
+	}
 
 	updateResult, err := coll.ReplaceOne(context.TODO(), bson.M{"_id": album.ID}, album)
 	if err != nil {

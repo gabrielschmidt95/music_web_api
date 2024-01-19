@@ -31,8 +31,8 @@ func init() {
 
 func convertDate(value interface{}) (time.Time, error) {
 	// Convert string Purchase to date field
-	if value == nil || value == "" {
-		return time.Now(), errors.New("Purchase is empty")
+	if value == nil || value.(string) == "" {
+		return time.Now(), errors.New("purchase is empty")
 	}
 
 	// check string formar if contains parsing time "2024-01-08T00:00:00Z": extra text: "T00:00:00Z"

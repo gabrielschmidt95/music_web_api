@@ -398,10 +398,10 @@ func InsertAlbum(album models.Collection) string {
 	if GetAlbunsbyTitle(album.Title) != nil {
 		return "Album already exists"
 	}
-	album.Purchase = nil
 	date, err := convertDate(album.Purchase)
+	album.Purchase = nil
 
-	if err != nil {
+	if err == nil {
 		album.Purchase = date
 	}
 
@@ -421,10 +421,10 @@ func InsertLogs(log interface{}) string {
 }
 
 func UpdateAlbum(album models.Collection) int64 {
-	album.Purchase = nil
 	date, err := convertDate(album.Purchase)
+	album.Purchase = nil
 
-	if err != nil {
+	if err == nil {
 		album.Purchase = date
 	}
 

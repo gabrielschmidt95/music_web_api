@@ -22,6 +22,11 @@ var coll *mongo.Collection
 var userColl *mongo.Collection
 var userLogsColl *mongo.Collection
 
+const (
+	CollectionName = "CD"
+	Group          = "$group"
+)
+
 func init() {
 	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
 		log.Fatalln("Error loading .env")
@@ -172,7 +177,7 @@ func GetTotals() map[string]map[string]int {
 	// MEDIA ----------
 	pipeline := bson.A{
 		bson.M{
-			"$group": bson.M{
+			Group: bson.M{
 				"_id":   "$MEDIA",
 				"total": bson.M{"$sum": 1},
 			},
@@ -196,7 +201,7 @@ func GetTotals() map[string]map[string]int {
 	// RELEASE YEAR ----------
 	pipeline = bson.A{
 		bson.M{
-			"$group": bson.M{
+			Group: bson.M{
 				"_id":   "$RELEASE_YEAR",
 				"total": bson.M{"$sum": 1},
 			},
@@ -220,7 +225,7 @@ func GetTotals() map[string]map[string]int {
 	// PURCHASE YEAR ----------
 	pipeline = bson.A{
 		bson.M{
-			"$group": bson.M{
+			Group: bson.M{
 				"_id":   bson.M{"$year": "$PURCHASE"},
 				"total": bson.M{"$sum": 1},
 			},
@@ -393,12 +398,11 @@ func InsertAlbum(album models.Collection) string {
 	if GetAlbunsbyTitle(album.Title) != nil {
 		return "Album already exists"
 	}
+	album.Purchase = nil
 	date, err := convertDate(album.Purchase)
 
-	album.Purchase = date
-
 	if err != nil {
-		album.Purchase = nil
+		album.Purchase = date
 	}
 
 	insertResult, err := coll.InsertOne(context.TODO(), album)
@@ -417,12 +421,11 @@ func InsertLogs(log interface{}) string {
 }
 
 func UpdateAlbum(album models.Collection) int64 {
+	album.Purchase = nil
 	date, err := convertDate(album.Purchase)
 
-	album.Purchase = date
-
 	if err != nil {
-		album.Purchase = nil
+		album.Purchase = date
 	}
 
 	updateResult, err := coll.ReplaceOne(context.TODO(), bson.M{"_id": album.ID}, album)

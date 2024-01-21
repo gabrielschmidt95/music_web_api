@@ -807,19 +807,19 @@ class Content:
                                                     dbc.ListGroup(
                                                         [
                                                             dbc.ListGroupItem(
-                                                                f' ANO DE LANÇAMENTO: {row["releaseYear"] if row["releaseYear"] is not None else ""}',
+                                                                f' ANO DE LANÇAMENTO: {row["releaseYear"] if  "releaseYear" in row else ""}',
                                                                 className=BI_CALENDAR,
                                                             ),
                                                             dbc.ListGroupItem(
-                                                                f' ANO DA EDIÇÃO: {int(row["editionYear"]) if row["editionYear"] is not None else ""}',
+                                                                f' ANO DA EDIÇÃO: {int(row["editionYear"]) if "editionYear" in row else ""}',
                                                                 className=BI_CALENDAR,
                                                             ),
                                                             dbc.ListGroupItem(
-                                                                f' MEDIA: {row["media"] if row["media"] is not None else ""}',
+                                                                f' MEDIA: {row["media"] if "meida" in row else ""}',
                                                                 className="bi bi-vinyl",
                                                             ),
                                                             dbc.ListGroupItem(
-                                                                f' AQUISIÇÃO: {row["purchase"] if row["purchase"] is not None else "" }',
+                                                                f' AQUISIÇÃO: {row["purchase"] if "purchase" in row else "" }',
                                                                 className="bi bi-cart3",
                                                             ),
                                                         ]
@@ -830,15 +830,15 @@ class Content:
                                                     dbc.ListGroup(
                                                         [
                                                             dbc.ListGroupItem(
-                                                                f' ORIGEM: {row["origin"]  if row["origin"] is not None else "" }',
+                                                                f' ORIGEM: {row["origin"]  if "origin"in row else "" }',
                                                                 className="bi bi-house",
                                                             ),
                                                             dbc.ListGroupItem(
-                                                                f' IFPI MASTERING: {row["ifpiMastering"]  if row["ifpiMastering"] is not None else "" }',
+                                                                f' IFPI MASTERING: {row["ifpiMastering"]  if "ifpiMastering" in row else "" }',
                                                                 className=BI_TEXT,
                                                             ),
                                                             dbc.ListGroupItem(
-                                                                f' IFPI MOULD: {row["ifpiMould"]  if row["ifpiMould"] is not None else "" }',
+                                                                f' IFPI MOULD: {row["ifpiMould"]  if "ifpiMould" in row else "" }',
                                                                 className=BI_TEXT,
                                                             ),
                                                         ]
@@ -849,15 +849,15 @@ class Content:
                                                     dbc.ListGroup(
                                                         [
                                                             dbc.ListGroupItem(
-                                                                f' CÓDIGO DE BARRAS: {row["barcode"] if row["barcode"] is not None else "" }',
+                                                                f' CÓDIGO DE BARRAS: {row["barcode"] if "barcode" in row else "" }',
                                                                 className=BI_TEXT,
                                                             ),
                                                             dbc.ListGroupItem(
-                                                                f' MATRIZ: {row["matriz"]  if row["matriz"] is not None else "" }',
+                                                                f' MATRIZ: {row["matriz"]  if "matriz" in row else "" }',
                                                                 className=BI_TEXT,
                                                             ),
                                                             dbc.ListGroupItem(
-                                                                f' LOTE: {row["lote"] if row["lote"] is not None else "" }',
+                                                                f' LOTE: {row["lote"] if "lote" in row else "" }',
                                                                 className=BI_TEXT,
                                                             ),
                                                         ]

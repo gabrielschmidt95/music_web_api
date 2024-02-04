@@ -16,38 +16,21 @@ type Collection struct {
 	Barcode       string             `bson:"BARCODE,omitempty" json:"barcode"`
 	Matriz        string             `bson:"MATRIZ,omitempty" json:"matriz"`
 	Lote          string             `bson:"LOTE,omitempty" json:"lote"`
+	Obs           string             `bson:"OBS,omitempty" json:"obs"`
 	Discogs       struct {
-		Country string `bson:"country,omitempty" json:"country"`
-		//Genre   []string `bson:"genre,omitempty" json:"genre"`
-		//Format  []string `bson:"format,omitempty" json:"format"`
-		//Style []string `bson:"style,omitempty" json:"style"`
-		ID int `bson:"id,omitempty" json:"id"`
-		//Label    []string `bson:"label,omitempty" json:"label"`
-		Type string `bson:"type,omitempty" json:"type"`
-		//Barcode  []string `bson:"barcode,omitempty" json:"barcode"`
-		// UserData struct {
-		// 	InWantlist   bool `bson:"in_wantlist,omitempty" json:"in_wantlist"`
-		// 	InCollection bool `bson:"in_collection,omitempty" json:"in_collection"`
-		// } `bson:"user_data,omitempty" json:"user_data"`
-		MasterID    int    `bson:"master_id,omitempty" json:"master_id"`
-		MasterURL   string `bson:"master_url,omitempty" json:"master_url"`
-		URI         string `bson:"uri,omitempty" json:"uri"`
-		Catno       string `bson:"catno,omitempty" json:"catno"`
-		Title       string `bson:"title,omitempty" json:"title"`
-		Thumb       string `bson:"thumb,omitempty" json:"thumb"`
-		CoverImage  string `bson:"cover_image,omitempty" json:"cover_image"`
-		ResourceURL string `bson:"resource_url,omitempty" json:"resource_url"`
-		// Community   struct {
-		// 	Want int `bson:"want,omitempty" json:"want"`
-		// 	Have int `bson:"have,omitempty" json:"have"`
-		// } `bson:"community,omitempty" json:"community"`
-		FormatQuantity int `bson:"format_quantity,omitempty" json:"format_quantity"`
-		// Formats        []struct {
-		// 	Name         string   `bson:"name,omitempty" json:"name"`
-		// 	Qty          string   `bson:"qty,omitempty" json:"qty"`
-		// 	Descriptions []string `bson:"descriptions,omitempty" json:"descriptions"`
-		// } `bson:"formats,omitempty" json:"formats"`
-		Urls []struct {
+		Country        string `bson:"country,omitempty" json:"country"`
+		ID             int    `bson:"id,omitempty" json:"id"`
+		Type           string `bson:"type,omitempty" json:"type"`
+		MasterID       int    `bson:"master_id,omitempty" json:"master_id"`
+		MasterURL      string `bson:"master_url,omitempty" json:"master_url"`
+		URI            string `bson:"uri,omitempty" json:"uri"`
+		Catno          string `bson:"catno,omitempty" json:"catno"`
+		Title          string `bson:"title,omitempty" json:"title"`
+		Thumb          string `bson:"thumb,omitempty" json:"thumb"`
+		CoverImage     string `bson:"cover_image,omitempty" json:"cover_image"`
+		ResourceURL    string `bson:"resource_url,omitempty" json:"resource_url"`
+		FormatQuantity int    `bson:"format_quantity,omitempty" json:"format_quantity"`
+		Urls           []struct {
 			ID  int    `bson:"id,omitempty" json:"id"`
 			URI string `bson:"uri,omitempty" json:"uri"`
 		} `bson:"urls,omitempty" json:"urls"`
@@ -71,7 +54,6 @@ type Collection struct {
 			Type string `bson:"type,omitempty" json:"type"`
 			URI  string `bson:"uri,omitempty" json:"uri"`
 		} `bson:"artists,omitempty" json:"artists"`
-		//AvailableMarkets []string `bson:"available_markets,omitempty" json:"available_markets"`
 		ExternalUrls struct {
 			Spotify string `bson:"spotify,omitempty" json:"spotify"`
 		} `bson:"external_urls,omitempty" json:"external_urls"`

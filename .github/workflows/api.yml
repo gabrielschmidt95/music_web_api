@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - API/**
+      - src/**
 
 jobs:
   build-and-publish:
@@ -28,7 +28,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
         with:
-          context: ./API
+          context: ./src
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/music-api:latest

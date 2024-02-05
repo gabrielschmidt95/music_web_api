@@ -1,4 +1,4 @@
-# Music Collection Manager
+# Music Collection API
 
 ## Description
 The Music Collection Manager is a software application designed to help you organize and manage your music collection. It provides a user-friendly interface for adding, editing, and deleting music albums, as well as searching and sorting capabilities.
@@ -11,7 +11,6 @@ The Music Collection Manager is a software application designed to help you orga
 - [MongoDB](https://docs.mongodb.com/manual/installation/) MongoDB for database
 - [Docker](https://docs.docker.com/get-docker/) Docker for containerization
 - [Docker Compose](https://docs.docker.com/compose/install/) Docker Compose for containerization
-- [Python](https://www.python.org/downloads/) Python for Dashboard
 - [Golang](https://golang.org/doc/install) Golang for API
 
 
@@ -40,21 +39,15 @@ The Music Collection Manager is a software application designed to help you orga
 - View album details, including cover image and tracklist.
 
 ## Docker Compose Installation
-1. Clone the repository: `git clone https://github.com/gabrieloliveira95/music-collection-manager.git`
-2. Navigate to the project directory: `cd music-collection-manager`
+1. Clone the repository: `git clone https://github.com/gabrieloliveira95/music_web_api.git`
+2. Navigate to the project directory: `cd music_web_api`
 3. Create .env file
 4. Start the application: `docker-compose up`
-5. Open your web browser and navigate to `http://localhost:8050`
+5. Open your web browser and navigate to `http://localhost:3000`
 6. Use the provided interface to manage your music collection.
 
-## Dashboard Installation
-1. Clone the repository: `git clone https://github.com/gabrieloliveira95/music-collection-manager.git`
-2. Navigate to the project directory: `cd music-collection-manager/Dashboard`
-3. Install dependencies: `pip install -r requirements.txt`
-4. Start the application: `python app.py`
-
 ## API Installation
-1. Navigate to the project directory: `cd music-collection-manager/API`
+1. Navigate to the project directory: `cd music_web_api/src`
 2. Start the application: `go run main.go`
 3. Open your web browser and navigate to `http://localhost:3000`
 4. Use the provided interface to manage your music collection.
@@ -71,29 +64,11 @@ The Music Collection Manager is a software application designed to help you orga
 # Discogs
 DISCOGS_TOKEN=
 
-# Google Auth
-GOOGLE_AUTH_URL=
-GOOGLE_AUTH_TOKEN_URI=
-GOOGLE_AUTH_REDIRECT_URI=
-GOOGLE_AUTH_USER_INFO_URL=
-GOOGLE_AUTH_CLIENT_ID=
-GOOGLE_AUTH_CLIENT_SECRET=
-FLASK_SECRET_KEY=
-GOOGLE_AUTH_SCOPE=
-
 # Auth0
 AUTH0_DOMAIN=
 AUTH0_AUDIENCE=
 AUTH0_CLIENT_ID=
 AUTH0_CLIENT_SECRET=
-
-# Spotify
-SPOTIPY_CLIENT_ID=
-SPOTIPY_CLIENT_SECRET=
-SPOTIPY_REDIRECT_URI=
-
-# API Hostname
-DB_API=
 
 # MongoDB
 MONGODB_DATABASE=
@@ -101,11 +76,10 @@ MONGODB_URI=
 ```
 
 ## Usage
-1. Open your web browser and navigate to `http://localhost:8050`
+1. Open your web browser and navigate to `http://localhost:3000`
 2. Use the provided interface to manage your music collection.
 
 ## Technologies Used
-- PYTHON
 - GOLANG
 - MongoDB
 - Docker
@@ -113,9 +87,9 @@ MONGODB_URI=
 ## Contributing
 Contributions are welcome! If you would like to contribute to this project, please follow these steps:
 1. Fork the repository.
-2. Create a new branch: `git checkout -b feature/your-feature`
-3. Make your changes and commit them: `git commit -m 'Add some feature'`
-4. Push to the branch: `git push origin feature/your-feature`
+2. Create a new branch:
+3. Make your changes and commit them:
+4. Push to the branch:
 5. Submit a pull request.
 
 ## License

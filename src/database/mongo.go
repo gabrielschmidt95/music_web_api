@@ -244,7 +244,7 @@ func GetAlbunsbyArtist(artist string) []models.Collection {
 	return results
 }
 
-func QueryAlbum(query map[string]interface{}) []models.Collection {
+func Find(query map[string]interface{}) []models.Collection {
 	findOptions := options.Find()
 	findOptions.SetLimit(20)
 
@@ -255,6 +255,20 @@ func QueryAlbum(query map[string]interface{}) []models.Collection {
 	if err := cursor.All(context.TODO(), &results); err != nil {
 		return []models.Collection{}
 	}
+	return results
+}
+
+func Aggregate(query []map[string]interface{}) []bson.M {
+	cursor, err := coll.Aggregate(context.Background(), query)
+	if err != nil {
+		panic(err)
+	}
+
+	var results []bson.M
+	if err := cursor.All(context.Background(), &results); err != nil {
+		panic(err)
+	}
+
 	return results
 }
 

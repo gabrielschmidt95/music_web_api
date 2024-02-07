@@ -22,8 +22,8 @@ import (
 const albumNotFound = "Album not found"
 const contentType = "Content-Type"
 
-// @Summary Query album
-// @Description Query album
+// @Summary Find
+// @Description Find
 // @Tags Album
 // @Accept  json
 // @Produce  json
@@ -31,7 +31,7 @@ const contentType = "Content-Type"
 // @Success 200 {object} string
 // @Security BearerAuth
 // @Router /query [post]
-func queryAlbum(w http.ResponseWriter, rq *http.Request) {
+func find(w http.ResponseWriter, rq *http.Request) {
 	var m map[string]interface{}
 
 	err := json.NewDecoder(rq.Body).Decode(&m)
@@ -40,7 +40,33 @@ func queryAlbum(w http.ResponseWriter, rq *http.Request) {
 		return
 	}
 
-	value := db.QueryAlbum(m)
+	value := db.Find(m)
+	if len(value) == 0 {
+		json.NewEncoder(w).Encode(map[string]string{})
+		return
+	}
+	json.NewEncoder(w).Encode(value)
+}
+
+// @Summary Aggregation
+// @Description Aggregation
+// @Tags Aggegation
+// @Accept  json
+// @Produce  json
+// @Param album body string true "Album"
+// @Success 200 {object} string
+// @Security BearerAuth
+// @Router /aggregation [post]
+func aggregation(w http.ResponseWriter, rq *http.Request) {
+	var m []map[string]interface{}
+
+	err := json.NewDecoder(rq.Body).Decode(&m)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	value := db.Aggregate(m)
 	if len(value) == 0 {
 		json.NewEncoder(w).Encode(map[string]string{})
 		return
@@ -396,7 +422,8 @@ func main() {
 	router.Handle("/new/album", jwt.EnsureValidToken()(http.HandlerFunc(insertAlbum))).Methods("POST")
 	router.Handle("/update/album", jwt.EnsureValidToken()(http.HandlerFunc(updateAlbum))).Methods("POST")
 	router.Handle("/delete/album", jwt.EnsureValidToken()(http.HandlerFunc(deleteAlbum))).Methods("POST")
-	router.Handle("/query", jwt.EnsureValidToken()(http.HandlerFunc(queryAlbum))).Methods("POST")
+	router.Handle("/find", jwt.EnsureValidToken()(http.HandlerFunc(find))).Methods("POST")
+	router.Handle("/aggregation", jwt.EnsureValidToken()(http.HandlerFunc(aggregation))).Methods("POST")
 
 	fmt.Println("Server running on port 3000")
 	http.ListenAndServe(":3000", handlers.LoggingHandler(os.Stdout, corsMiddleware(router)))

@@ -187,31 +187,6 @@ func insertAlbum(w http.ResponseWriter, rq *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"Message": resp})
 }
 
-// @Summary Insert logs
-// @Description Insert logs
-// @Tags Logs
-// @Accept  json
-// @Produce  json
-// @Param log body string true "Log"
-// @Param type body string true "Type"
-// @Success 200 {object} string
-// @Security BearerAuth
-// @Router /logs [post]
-func insertLogs(w http.ResponseWriter, rq *http.Request) {
-	type Logs struct {
-		Log  interface{} `json:"log"`
-		Type string      `json:"type"`
-	}
-	var p Logs
-	err := json.NewDecoder(rq.Body).Decode(&p)
-	if err != nil {
-		json.NewEncoder(w).Encode(map[string]string{"Message": err.Error()})
-		return
-	}
-	resp := db.InsertLogs(p)
-	json.NewEncoder(w).Encode(map[string]string{"Message": resp})
-}
-
 // @Summary Update album
 // @Description Update album
 // @Tags Album
@@ -321,33 +296,6 @@ func getTotals(w http.ResponseWriter, rq *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
-// @Summary Get user
-// @Description Get user
-// @Tags User
-// @Accept  json
-// @Produce  json
-// @Success 200 {object} string
-// @Security BearerAuth
-// @Router /user [get]
-func getUser(w http.ResponseWriter, rq *http.Request) {
-	type USER struct {
-		User string `json:"user"`
-	}
-	var p USER
-	err := json.NewDecoder(rq.Body).Decode(&p)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	resp := db.GetUser(p.User)
-
-	if resp == "" {
-		json.NewEncoder(w).Encode(map[string]string{})
-		return
-	}
-	json.NewEncoder(w).Encode(resp)
-}
-
 // @Summary Get albuns by title
 // @Description Get albuns by title
 // @Tags Album
@@ -438,7 +386,6 @@ func main() {
 	router.Handle("/artists", jwt.EnsureValidToken()(http.HandlerFunc(getArtists))).Methods("GET")
 	router.Handle("/medias", jwt.EnsureValidToken()(http.HandlerFunc(getMedias))).Methods("GET")
 	router.Handle("/totals", jwt.EnsureValidToken()(http.HandlerFunc(getTotals))).Methods("GET")
-	router.Handle("/user", jwt.EnsureValidToken()(http.HandlerFunc(getUser))).Methods("GET")
 	router.Handle("/all", jwt.EnsureValidToken()(http.HandlerFunc(getAll))).Methods("GET")
 
 	router.Handle("/album/artist", jwt.EnsureValidToken()(http.HandlerFunc(getAlbunsbyArtist))).Methods("POST")
@@ -450,8 +397,6 @@ func main() {
 	router.Handle("/update/album", jwt.EnsureValidToken()(http.HandlerFunc(updateAlbum))).Methods("POST")
 	router.Handle("/delete/album", jwt.EnsureValidToken()(http.HandlerFunc(deleteAlbum))).Methods("POST")
 	router.Handle("/query", jwt.EnsureValidToken()(http.HandlerFunc(queryAlbum))).Methods("POST")
-
-	router.Handle("/logs", jwt.EnsureValidToken()(http.HandlerFunc(insertLogs))).Methods("POST")
 
 	fmt.Println("Server running on port 3000")
 	http.ListenAndServe(":3000", handlers.LoggingHandler(os.Stdout, corsMiddleware(router)))

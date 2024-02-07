@@ -19,8 +19,6 @@ import (
 )
 
 var coll *mongo.Collection
-var userColl *mongo.Collection
-var userLogsColl *mongo.Collection
 
 const (
 	CollectionName = "CD"
@@ -70,8 +68,6 @@ func convertDate(value interface{}) (time.Time, error) {
 
 func CloseConn() {
 	coll.Database().Client().Disconnect(context.Background())
-	userColl.Database().Client().Disconnect(context.Background())
-	userLogsColl.Database().Client().Disconnect(context.Background())
 }
 
 func GetColl() *mongo.Collection {
@@ -92,8 +88,6 @@ func GetColl() *mongo.Collection {
 	database := os.Getenv("MONGODB_DATABASE")
 
 	coll = client.Database(database).Collection("CD")
-	userColl = client.Database(database).Collection("USER")
-	userLogsColl = client.Database(database).Collection("USER_LOGS")
 
 	log.Printf("Connected to MongoDB! Collection %s", coll.Name())
 	return coll
@@ -120,24 +114,6 @@ func GetArtists() []string {
 	}
 	return out
 
-}
-
-func GetUser(user string) string {
-	print(user)
-	cursor := userColl.FindOne(context.TODO(), bson.M{"email": user})
-
-	type User struct {
-		ID    primitive.ObjectID `json:"_id" bson:"_id"`
-		Email string             `json:"email"`
-	}
-
-	var results User
-
-	if err := cursor.Decode(&results); err != nil {
-		return ""
-	}
-
-	return results.ID.Hex()
 }
 
 func GetMedia() map[string][]string {
@@ -406,14 +382,6 @@ func InsertAlbum(album models.Collection) string {
 	}
 
 	insertResult, err := coll.InsertOne(context.TODO(), album)
-	if err != nil {
-		return err.Error()
-	}
-	return insertResult.InsertedID.(primitive.ObjectID).Hex()
-}
-
-func InsertLogs(log interface{}) string {
-	insertResult, err := userLogsColl.InsertOne(context.TODO(), log)
 	if err != nil {
 		return err.Error()
 	}

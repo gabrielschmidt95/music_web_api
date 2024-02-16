@@ -172,7 +172,9 @@ func GetTotals() map[string]map[string]int {
 	media := map[string]int{}
 
 	for _, v := range results {
-		media[v["_id"].(string)] = int(v["total"].(int32))
+		if v["_id"] != nil {
+			media[v["_id"].(string)] = int(v["total"].(int32))
+		}
 	}
 	// RELEASE YEAR ----------
 	pipeline = bson.A{

@@ -260,6 +260,21 @@ func Find(query map[string]interface{}) []models.Collection {
 	return results
 }
 
+func FindAndSort(query map[string]interface{}, sortQuery map[string]interface{}) []models.Collection {
+	findOptions := options.Find()
+	findOptions.SetLimit(20)
+	findOptions.SetSort(sortQuery)
+
+	cursor, _ := coll.Find(context.TODO(), query, findOptions)
+
+	var results []models.Collection
+
+	if err := cursor.All(context.TODO(), &results); err != nil {
+		return []models.Collection{}
+	}
+	return results
+}
+
 func Aggregate(query []map[string]interface{}) []bson.M {
 	cursor, err := coll.Aggregate(context.Background(), query)
 	if err != nil {

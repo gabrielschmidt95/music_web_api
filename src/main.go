@@ -48,6 +48,36 @@ func find(w http.ResponseWriter, rq *http.Request) {
 	json.NewEncoder(w).Encode(value)
 }
 
+// @Summary Find
+// @Description Find
+// @Tags Album
+// @Accept  json
+// @Produce  json
+// @Param album body string true "Album"
+// @Success 200 {object} string
+// @Security BearerAuth
+// @Router /query [post]
+func findAndSort(w http.ResponseWriter, rq *http.Request) {
+	type FindAndSort struct {
+		Query map[string]interface{} `json:"query"`
+		Sort  map[string]interface{} `json:"sort"`
+	}
+	var p FindAndSort
+	err := json.NewDecoder(rq.Body).Decode(&p)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	value := db.FindAndSort(p.Query, p.Sort)
+	if len(value) == 0 {
+		json.NewEncoder(w).Encode(map[string]string{})
+		return
+	}
+	json.NewEncoder(w).Encode(value)
+}
+
 // @Summary Aggregation
 // @Description Aggregation
 // @Tags Aggegation
@@ -424,6 +454,7 @@ func main() {
 	router.Handle("/delete/album", jwt.EnsureValidToken()(http.HandlerFunc(deleteAlbum))).Methods("POST")
 	router.Handle("/find", jwt.EnsureValidToken()(http.HandlerFunc(find))).Methods("POST")
 	router.Handle("/aggregation", jwt.EnsureValidToken()(http.HandlerFunc(aggregation))).Methods("POST")
+	router.Handle("/findAndSort", jwt.EnsureValidToken()(http.HandlerFunc(findAndSort))).Methods("POST")
 
 	fmt.Println("Server running on port 3000")
 	http.ListenAndServe(":3000", handlers.LoggingHandler(os.Stdout, corsMiddleware(router)))

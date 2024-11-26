@@ -86,6 +86,9 @@ func GetColl() *mongo.Collection {
 		log.Fatal(err)
 	}
 	database := os.Getenv("MONGODB_DATABASE")
+	if database == "" {
+		log.Fatal("You must set your 'MONGODB_DATABASE' environment variable.")
+	}
 
 	coll = client.Database(database).Collection("CD")
 

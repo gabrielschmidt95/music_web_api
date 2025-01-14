@@ -17,6 +17,7 @@ type Collection struct {
 	Matriz        string             `bson:"MATRIZ,omitempty" json:"matriz"`
 	Lote          string             `bson:"LOTE,omitempty" json:"lote"`
 	Obs           string             `bson:"OBS,omitempty" json:"obs"`
+	Weight        int                `bson:"WEIGHT,omitempty" json:"weight"`
 	Discogs       struct {
 		Country        string `bson:"country,omitempty" json:"country"`
 		ID             int    `bson:"id,omitempty" json:"id"`
